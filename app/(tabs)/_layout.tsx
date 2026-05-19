@@ -8,13 +8,16 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 interface TabIconProps {
   name: IconName;
   focused: boolean;
-  color: string;
 }
 
-function TabIcon({ name, focused, color }: TabIconProps) {
+function TabIcon({ name, focused }: TabIconProps) {
   return (
     <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
-      <Ionicons name={name} size={22} color={focused ? COLORS.primary : COLORS.textSecondary} />
+      <Ionicons
+        name={name}
+        size={22}
+        color={focused ? COLORS.primary : COLORS.textSecondary}
+      />
     </View>
   );
 }
@@ -34,35 +37,27 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Today',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIcon name={focused ? 'water' : 'water-outline'} focused={focused} color={color} />
+          title: 'Dziś',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'water' : 'water-outline'} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
         name="statistics"
         options={{
-          title: 'Statistics',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIcon
-              name={focused ? 'bar-chart' : 'bar-chart-outline'}
-              focused={focused}
-              color={color}
-            />
+          title: 'Statystyki',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'bar-chart' : 'bar-chart-outline'} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ focused, color }) => (
-            <TabIcon
-              name={focused ? 'settings' : 'settings-outline'}
-              focused={focused}
-              color={color}
-            />
+          title: 'Ustawienia',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'settings' : 'settings-outline'} focused={focused} />
           ),
         }}
       />
@@ -88,9 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
   },
-  tabItem: {
-    paddingTop: 4,
-  },
+  tabItem: { paddingTop: 4 },
   iconWrapper: {
     width: 36,
     height: 36,
@@ -98,7 +91,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapperActive: {
-    backgroundColor: '#EBF5FF',
-  },
+  iconWrapperActive: { backgroundColor: '#EBF5FF' },
 });

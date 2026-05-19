@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,10 +19,24 @@ import { useFocusEffect } from 'expo-router';
 
 import { CircularProgress } from '@/components/CircularProgress';
 import { QuickAddButton } from '@/components/QuickAddButton';
+import { FlyingDrop } from '@/components/FlyingDrop';
 import { useWaterData } from '@/hooks/useWaterData';
 import { useSettings } from '@/hooks/useSettings';
 import { COLORS, QUICK_ADD_OPTIONS } from '@/constants';
 import { formatDisplayDate } from '@/utils/dateUtils';
+import {
+  getGreeting,
+  ADD_REACTIONS,
+  FUNNY_TOASTS,
+  GOAL_MET_MESSAGES,
+  randomItem,
+} from '@/constants/messages';
+
+interface FlyingDropEntry {
+  id: number;
+  label: string;
+  message: string;
+}
 
 export default function TodayScreen() {
   const { todayRecord, isLoading, addWater, undoLast, refresh } = useWaterData();
@@ -30,8 +44,20 @@ export default function TodayScreen() {
 
   const [customAmountVisible, setCustomAmountVisible] = useState(false);
   const [customInput, setCustomInput] = useState('');
+  const [flyingDrops, setFlyingDrops] = useState<FlyingDropEntry[]>([]);
+  const dropIdRef = useRef(0);
 
-  const progressScale = useRef(new Animated.Value(1)).current;
+  // Slide-in animation for the whole content on mount
+  const slideY   = useRef(new Animated.Value(30)).current;
+  const fadeIn   = useRef(new Animated.Value(0)).current;
+  const ringScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeIn, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.spring(slideY,  { toValue: 0, speed: 12, bounciness: 6, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -39,30 +65,40 @@ export default function TodayScreen() {
     }, [refresh])
   );
 
+  const spawnDrop = useCallback((amount: number) => {
+    const id = dropIdRef.current++;
+    const message =
+      ADD_REACTIONS[amount as keyof typeof ADD_REACTIONS] ?? randomItem(FUNNY_TOASTS);
+    setFlyingDrops((prev) => [...prev, { id, label: `+${amount} ml`, message }]);
+
+    // Bounce the ring
+    Animated.sequence([
+      Animated.spring(ringScale, { toValue: 1.06, speed: 50, bounciness: 12, useNativeDriver: true }),
+      Animated.spring(ringScale, { toValue: 1,    speed: 20, bounciness: 8,  useNativeDriver: true }),
+    ]).start();
+  }, [ringScale]);
+
   const handleAddWater = useCallback(
     async (amount: number) => {
-      Animated.sequence([
-        Animated.spring(progressScale, { toValue: 1.03, useNativeDriver: true, speed: 50 }),
-        Animated.spring(progressScale, { toValue: 1, useNativeDriver: true, speed: 20 }),
-      ]).start();
+      spawnDrop(amount);
       await addWater(amount);
     },
-    [addWater, progressScale]
+    [addWater, spawnDrop]
   );
 
   const handleUndo = useCallback(async () => {
     if (!todayRecord || todayRecord.entries.length === 0) return;
     const last = todayRecord.entries[todayRecord.entries.length - 1];
-    Alert.alert('Undo last entry', `Remove ${last.amount} ml?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => undoLast() },
+    Alert.alert('Cofnij ostatni wpis', `Usunąć ${last.amount} ml?`, [
+      { text: 'Anuluj', style: 'cancel' },
+      { text: 'Usuń', style: 'destructive', onPress: () => undoLast() },
     ]);
   }, [todayRecord, undoLast]);
 
   const handleCustomAdd = useCallback(() => {
     const amount = parseInt(customInput, 10);
     if (isNaN(amount) || amount <= 0 || amount > 5000) {
-      Alert.alert('Invalid amount', 'Enter a value between 1 and 5000 ml.');
+      Alert.alert('Nieprawidłowa ilość', 'Wpisz wartość od 1 do 5000 ml.');
       return;
     }
     handleAddWater(amount);
@@ -70,10 +106,13 @@ export default function TodayScreen() {
     setCustomAmountVisible(false);
   }, [customInput, handleAddWater]);
 
-  const totalMl = todayRecord?.totalMl ?? 0;
-  const goalMl = settings.dailyGoalMl;
+  const totalMl  = todayRecord?.totalMl ?? 0;
+  const goalMl   = settings.dailyGoalMl;
   const progress = goalMl > 0 ? totalMl / goalMl : 0;
   const remaining = Math.max(goalMl - totalMl, 0);
+  const isGoalMet = totalMl > 0 && remaining === 0;
+
+  const goalMetMsg = isGoalMet ? randomItem(GOAL_MET_MESSAGES) : '';
 
   if (isLoading) {
     return (
@@ -90,125 +129,140 @@ export default function TodayScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}
         >
-          <ScrollView
-            contentContainerStyle={styles.scroll}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+          <Animated.View
+            style={[styles.flex, { opacity: fadeIn, transform: [{ translateY: slideY }] }]}
           >
-            {/* Header */}
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.greeting}>Good hydration 💧</Text>
-                <Text style={styles.dateText}>
-                  {formatDisplayDate(todayRecord?.date ?? '')}
-                </Text>
-              </View>
-              {todayRecord && todayRecord.entries.length > 0 && (
-                <TouchableOpacity onPress={handleUndo} style={styles.undoButton}>
-                  <Ionicons name="arrow-undo" size={18} color={COLORS.primary} />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Progress ring */}
-            <Animated.View
-              style={[
-                styles.progressContainer,
-                { transform: [{ scale: progressScale }] },
-              ]}
+            <ScrollView
+              contentContainerStyle={styles.scroll}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
-              <CircularProgress
-                size={220}
-                strokeWidth={18}
-                progress={progress}
-                totalMl={totalMl}
-                goalMl={goalMl}
-              />
-            </Animated.View>
-
-            {/* Remaining / goal met chip */}
-            {remaining > 0 && (
-              <View style={styles.remainingChip}>
-                <Text style={styles.remainingText}>{remaining} ml to go</Text>
+              {/* Header */}
+              <View style={styles.header}>
+                <View>
+                  <Text style={styles.greeting}>{getGreeting()}</Text>
+                  <Text style={styles.dateText}>
+                    {formatDisplayDate(todayRecord?.date ?? '')}
+                  </Text>
+                </View>
+                {todayRecord && todayRecord.entries.length > 0 && (
+                  <TouchableOpacity onPress={handleUndo} style={styles.undoButton}>
+                    <Ionicons name="arrow-undo" size={18} color={COLORS.primary} />
+                  </TouchableOpacity>
+                )}
               </View>
-            )}
-            {remaining === 0 && totalMl > 0 && (
-              <View style={[styles.remainingChip, styles.successChip]}>
-                <Text style={[styles.remainingText, styles.successText]}>
-                  Daily goal achieved! 🎉
-                </Text>
-              </View>
-            )}
 
-            {/* Quick add */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Quick Add</Text>
-              <View style={styles.quickAddRow}>
-                {QUICK_ADD_OPTIONS.map((amount) => (
-                  <QuickAddButton key={amount} amount={amount} onPress={handleAddWater} />
+              {/* Progress ring + flying drops */}
+              <View style={styles.ringWrapper}>
+                <Animated.View style={{ transform: [{ scale: ringScale }] }}>
+                  <CircularProgress
+                    size={220}
+                    strokeWidth={18}
+                    progress={progress}
+                    totalMl={totalMl}
+                    goalMl={goalMl}
+                  />
+                </Animated.View>
+
+                {/* Flying drops rendered relative to ring */}
+                {flyingDrops.map((drop) => (
+                  <FlyingDrop
+                    key={drop.id}
+                    label={drop.label}
+                    message={drop.message}
+                    onDone={() =>
+                      setFlyingDrops((prev) => prev.filter((d) => d.id !== drop.id))
+                    }
+                  />
                 ))}
               </View>
-            </View>
 
-            {/* Custom amount */}
-            <TouchableOpacity
-              style={styles.customAddButton}
-              onPress={() => setCustomAmountVisible(true)}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
-              <Text style={styles.customAddText}>Custom amount</Text>
-            </TouchableOpacity>
+              {/* Status chip */}
+              {remaining > 0 && (
+                <View style={styles.chip}>
+                  <Text style={styles.chipText}>
+                    Jeszcze {remaining} ml do celu 💦
+                  </Text>
+                </View>
+              )}
+              {isGoalMet && (
+                <View style={[styles.chip, styles.chipSuccess]}>
+                  <Text style={[styles.chipText, styles.chipSuccessText]}>
+                    {goalMetMsg}
+                  </Text>
+                </View>
+              )}
 
-            {/* Today's log */}
-            {todayRecord && todayRecord.entries.length > 0 && (
+              {/* Quick add */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Today's log</Text>
-                <View style={styles.logCard}>
-                  {[...todayRecord.entries]
-                    .reverse()
-                    .slice(0, 5)
-                    .map((entry, i) => (
-                      <View
-                        key={entry.id}
-                        style={[
-                          styles.logRow,
-                          i < Math.min(todayRecord.entries.length, 5) - 1 &&
-                            styles.logRowBorder,
-                        ]}
-                      >
-                        <Text style={styles.logEmoji}>💧</Text>
-                        <Text style={styles.logAmount}>+{entry.amount} ml</Text>
-                        <Text style={styles.logTime}>
-                          {new Date(entry.timestamp).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </Text>
-                      </View>
-                    ))}
-                  {todayRecord.entries.length > 5 && (
-                    <Text style={styles.moreEntries}>
-                      +{todayRecord.entries.length - 5} more entries
-                    </Text>
-                  )}
+                <Text style={styles.sectionTitle}>Szybki dodaj</Text>
+                <View style={styles.quickAddRow}>
+                  {QUICK_ADD_OPTIONS.map((amount) => (
+                    <QuickAddButton key={amount} amount={amount} onPress={handleAddWater} />
+                  ))}
                 </View>
               </View>
-            )}
 
-            {/* Empty state */}
-            {(!todayRecord || todayRecord.entries.length === 0) && (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>🌊</Text>
-                <Text style={styles.emptyTitle}>Start tracking</Text>
-                <Text style={styles.emptySubtitle}>
-                  Tap a quick add button above to log your first drink today.
-                </Text>
-              </View>
-            )}
+              {/* Custom amount */}
+              <TouchableOpacity
+                style={styles.customAddButton}
+                onPress={() => setCustomAmountVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
+                <Text style={styles.customAddText}>Własna ilość</Text>
+              </TouchableOpacity>
 
-            <View style={styles.bottomPadding} />
-          </ScrollView>
+              {/* Today's log */}
+              {todayRecord && todayRecord.entries.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Dzisiejszy dziennik</Text>
+                  <View style={styles.logCard}>
+                    {[...todayRecord.entries]
+                      .reverse()
+                      .slice(0, 5)
+                      .map((entry, i) => (
+                        <View
+                          key={entry.id}
+                          style={[
+                            styles.logRow,
+                            i < Math.min(todayRecord.entries.length, 5) - 1 &&
+                              styles.logRowBorder,
+                          ]}
+                        >
+                          <Text style={styles.logEmoji}>💧</Text>
+                          <Text style={styles.logAmount}>+{entry.amount} ml</Text>
+                          <Text style={styles.logTime}>
+                            {new Date(entry.timestamp).toLocaleTimeString('pl-PL', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </Text>
+                        </View>
+                      ))}
+                    {todayRecord.entries.length > 5 && (
+                      <Text style={styles.moreEntries}>
+                        +{todayRecord.entries.length - 5} więcej wpisów
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Empty state */}
+              {(!todayRecord || todayRecord.entries.length === 0) && (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyEmoji}>🌊</Text>
+                  <Text style={styles.emptyTitle}>Zacznij śledzić!</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Twoje nerki już czekają. Kliknij przycisk powyżej! 🫘
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.bottomPadding} />
+            </ScrollView>
+          </Animated.View>
         </KeyboardAvoidingView>
       </SafeAreaView>
 
@@ -216,7 +270,7 @@ export default function TodayScreen() {
       <Modal
         visible={customAmountVisible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setCustomAmountVisible(false)}
       >
         <TouchableOpacity
@@ -225,14 +279,14 @@ export default function TodayScreen() {
           onPress={() => setCustomAmountVisible(false)}
         >
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Custom amount</Text>
-            <Text style={styles.modalSubtitle}>How much did you drink?</Text>
+            <Text style={styles.modalTitle}>Ile wypiłeś? 🤔</Text>
+            <Text style={styles.modalSubtitle}>Wpisz ilość w mililitrach</Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
                 value={customInput}
                 onChangeText={setCustomInput}
-                placeholder="e.g. 400"
+                placeholder="np. 400"
                 placeholderTextColor={COLORS.textLight}
                 keyboardType="number-pad"
                 autoFocus
@@ -247,10 +301,10 @@ export default function TodayScreen() {
                 style={styles.modalCancel}
                 onPress={() => setCustomAmountVisible(false)}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={styles.modalCancelText}>Anuluj</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalConfirm} onPress={handleCustomAdd}>
-                <Text style={styles.modalConfirmText}>Add 💧</Text>
+                <Text style={styles.modalConfirmText}>Dodaj 💧</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -262,8 +316,8 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
-  safeArea: { flex: 1 },
-  flex: { flex: 1 },
+  safeArea:  { flex: 1 },
+  flex:      { flex: 1 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   loadingText: { fontSize: 48 },
 
@@ -276,7 +330,7 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   greeting: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     color: COLORS.textPrimary,
     letterSpacing: -0.5,
@@ -301,9 +355,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  progressContainer: { alignItems: 'center', marginBottom: 16 },
+  ringWrapper: {
+    alignItems: 'center',
+    marginBottom: 16,
+    // relative so FlyingDrop can be positioned absolute inside
+  },
 
-  remainingChip: {
+  chip: {
     alignSelf: 'center',
     backgroundColor: COLORS.backgroundCard,
     paddingHorizontal: 20,
@@ -316,9 +374,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  successChip: { backgroundColor: '#E8F8F0' },
-  remainingText: { color: COLORS.textSecondary, fontWeight: '600', fontSize: 14 },
-  successText: { color: COLORS.success },
+  chipSuccess: { backgroundColor: '#E8F8F0' },
+  chipText: { color: COLORS.textSecondary, fontWeight: '600', fontSize: 14 },
+  chipSuccessText: { color: COLORS.success },
 
   section: { marginBottom: 20 },
   sectionTitle: {
@@ -369,9 +427,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   logRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F0F8FF' },
-  logEmoji: { fontSize: 16 },
+  logEmoji:  { fontSize: 16 },
   logAmount: { flex: 1, fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
-  logTime: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
+  logTime:   { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
   moreEntries: {
     textAlign: 'center',
     color: COLORS.textSecondary,
@@ -380,20 +438,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  emptyState: { alignItems: 'center', paddingVertical: 32 },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 6,
-  },
+  emptyState:    { alignItems: 'center', paddingVertical: 32 },
+  emptyEmoji:    { fontSize: 48, marginBottom: 12 },
+  emptyTitle:    { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
   emptySubtitle: {
     fontSize: 14,
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
-    maxWidth: 240,
+    maxWidth: 260,
   },
 
   bottomPadding: { height: 20 },
@@ -401,16 +454,13 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(30,60,90,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    justifyContent: 'flex-end',
+    padding: 16,
   },
   modalCard: {
     backgroundColor: COLORS.backgroundCard,
     borderRadius: 28,
     padding: 28,
-    width: '100%',
-    maxWidth: 340,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.2,

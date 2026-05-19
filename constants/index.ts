@@ -47,9 +47,9 @@ export const STORAGE_KEYS = {
 
 export const APP_INFO = {
   name: 'Siply',
-  tagline: 'Track your hydration beautifully.',
+  tagline: 'Nawadniaj się pięknie.',
   version: '1.0.0',
   author: 'Damian Chymkowski',
   description:
-    'Siply helps you track your daily water intake with a beautiful, simple interface.',
+    'Siply pomaga śledzić dzienne spożycie wody w prosty i elegancki sposób.',
 } as const;

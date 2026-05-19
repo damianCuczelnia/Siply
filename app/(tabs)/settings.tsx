@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,13 +18,13 @@ import { COLORS, APP_INFO, DEFAULT_DAILY_GOAL_ML } from '@/constants';
 
 export default function SettingsScreen() {
   const { settings, updateSettings } = useSettings();
-  const [goalInput, setGoalInput] = useState(String(settings.dailyGoalMl));
+  const [goalInput, setGoalInput]         = useState(String(settings.dailyGoalMl));
   const [isEditingGoal, setIsEditingGoal] = useState(false);
 
   const handleSaveGoal = () => {
     const value = parseInt(goalInput, 10);
     if (isNaN(value) || value < 100 || value > 10000) {
-      Alert.alert('Invalid value', 'Enter a goal between 100 and 10,000 ml.');
+      Alert.alert('Nieprawidłowa wartość', 'Wpisz cel od 100 do 10 000 ml. Serio.');
       setGoalInput(String(settings.dailyGoalMl));
     } else {
       updateSettings({ dailyGoalMl: value });
@@ -35,16 +34,16 @@ export default function SettingsScreen() {
 
   const handleResetData = () => {
     Alert.alert(
-      'Reset all data',
-      'This will permanently delete all your water tracking history. This action cannot be undone.',
+      'Resetuj wszystkie dane 💀',
+      'Cała historia zniknie na zawsze. Naprawdę chcesz to zrobić?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Nie, zostawiam', style: 'cancel' },
         {
-          text: 'Reset',
+          text: 'Tak, kasuj',
           style: 'destructive',
           onPress: async () => {
             await resetAllData();
-            Alert.alert('Done', 'All data has been reset.');
+            Alert.alert('Gotowe', 'Wszystkie dane zostały wyczyszczone. Świeży start! 🌊');
           },
         },
       ]
@@ -52,10 +51,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-      style={styles.gradient}
-    >
+    <LinearGradient colors={[COLORS.gradientStart, COLORS.gradientEnd]} style={styles.gradient}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -63,21 +59,23 @@ export default function SettingsScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Settings</Text>
-            <Text style={styles.subtitle}>Customize your experience</Text>
+            <Text style={styles.title}>Ustawienia ⚙️</Text>
+            <Text style={styles.subtitle}>Dostosuj aplikację do siebie</Text>
           </View>
 
-          {/* Daily goal section */}
+          {/* Hydration goal */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>HYDRATION</Text>
+            <Text style={styles.sectionLabel}>NAWODNIENIE</Text>
             <View style={styles.card}>
               <View style={styles.settingRow}>
                 <View style={styles.settingIcon}>
                   <Ionicons name="water" size={20} color={COLORS.primary} />
                 </View>
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingTitle}>Daily goal</Text>
-                  <Text style={styles.settingDesc}>Your target water intake per day</Text>
+                  <Text style={styles.settingTitle}>Dzienny cel</Text>
+                  <Text style={styles.settingDesc}>
+                    Ile ml chcesz wypić każdego dnia? (Twoje nerki mają zdanie)
+                  </Text>
                 </View>
                 {isEditingGoal ? (
                   <View style={styles.goalEditRow}>
@@ -108,7 +106,7 @@ export default function SettingsScreen() {
                 )}
               </View>
 
-              {/* Preset goals */}
+              {/* Preset buttons */}
               <View style={styles.presetRow}>
                 {[1500, 2000, 2500, 3000].map((preset) => (
                   <TouchableOpacity
@@ -128,65 +126,74 @@ export default function SettingsScreen() {
                         settings.dailyGoalMl === preset && styles.presetChipTextActive,
                       ]}
                     >
-                      {preset / 1000}L
+                      {preset / 1000} L
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
+
+              <Text style={styles.goalHint}>
+                {settings.dailyGoalMl < 1500
+                  ? '⚠️ To trochę mało... nerki proszą o więcej!'
+                  : settings.dailyGoalMl >= 3000
+                  ? '💦 Ambitny cel! Jesteś wodnym mistrzem'
+                  : '👌 Solidny cel — odpowiedni dla większości'}
+              </Text>
             </View>
           </View>
 
           {/* Data section */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>DATA</Text>
+            <Text style={styles.sectionLabel}>DANE</Text>
             <View style={styles.card}>
               <TouchableOpacity style={styles.settingRow} onPress={handleResetData}>
                 <View style={[styles.settingIcon, styles.dangerIcon]}>
                   <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
                 </View>
                 <View style={styles.settingInfo}>
-                  <Text style={[styles.settingTitle, styles.dangerText]}>Reset all data</Text>
-                  <Text style={styles.settingDesc}>Delete all tracking history</Text>
+                  <Text style={[styles.settingTitle, styles.dangerText]}>Resetuj dane</Text>
+                  <Text style={styles.settingDesc}>
+                    Usuwa całą historię. Nie ma odwrotu. Serio.
+                  </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* About section */}
+          {/* About */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>ABOUT</Text>
+            <Text style={styles.sectionLabel}>O APLIKACJI</Text>
             <View style={styles.card}>
-              {/* App info */}
               <View style={[styles.settingRow, styles.settingRowBorder]}>
                 <View style={styles.settingIcon}>
                   <Text style={{ fontSize: 18 }}>💧</Text>
                 </View>
                 <View style={styles.settingInfo}>
                   <Text style={styles.settingTitle}>{APP_INFO.name}</Text>
-                  <Text style={styles.settingDesc}>Version {APP_INFO.version}</Text>
+                  <Text style={styles.settingDesc}>Wersja {APP_INFO.version}</Text>
                 </View>
               </View>
 
-              {/* Author */}
               <View style={[styles.settingRow, styles.settingRowBorder]}>
                 <View style={styles.settingIcon}>
                   <Ionicons name="person-outline" size={20} color={COLORS.primary} />
                 </View>
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingTitle}>Author</Text>
+                  <Text style={styles.settingTitle}>Autor</Text>
                   <Text style={styles.settingDesc}>{APP_INFO.author}</Text>
                 </View>
               </View>
 
-              {/* Description */}
               <View style={styles.settingRow}>
                 <View style={styles.settingIcon}>
-                  <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+                  <Ionicons name="school-outline" size={20} color={COLORS.primary} />
                 </View>
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingTitle}>About</Text>
-                  <Text style={styles.settingDesc}>{APP_INFO.description}</Text>
+                  <Text style={styles.settingTitle}>Projekt studencki</Text>
+                  <Text style={styles.settingDesc}>
+                    Zbudowany w React Native + Expo. Bo nawodnienie jest ważne.
+                  </Text>
                 </View>
               </View>
             </View>
@@ -195,7 +202,7 @@ export default function SettingsScreen() {
           {/* Tagline */}
           <View style={styles.taglineContainer}>
             <Text style={styles.taglineEmoji}>💧</Text>
-            <Text style={styles.tagline}>{APP_INFO.tagline}</Text>
+            <Text style={styles.tagline}>"{APP_INFO.tagline}"</Text>
           </View>
 
           <View style={styles.bottomPadding} />
@@ -209,30 +216,13 @@ const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
 
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
+  scroll: { paddingHorizontal: 20, paddingTop: 8 },
 
-  header: {
-    marginBottom: 28,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-    fontWeight: '500',
-  },
+  header:   { marginBottom: 28 },
+  title:    { fontSize: 28, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.8 },
+  subtitle: { fontSize: 14, color: COLORS.textSecondary, marginTop: 2, fontWeight: '500' },
 
-  section: {
-    marginBottom: 24,
-  },
+  section:      { marginBottom: 24 },
   sectionLabel: {
     fontSize: 11,
     fontWeight: '700',
@@ -260,10 +250,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 12,
   },
-  settingRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F8FF',
-  },
+  settingRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F0F8FF' },
   settingIcon: {
     width: 38,
     height: 38,
@@ -272,26 +259,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dangerIcon: {
-    backgroundColor: '#FFF0F0',
-  },
-  settingInfo: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  dangerText: {
-    color: COLORS.danger,
-  },
-  settingDesc: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 1,
-    fontWeight: '400',
-  },
+  dangerIcon: { backgroundColor: '#FFF0F0' },
+  settingInfo: { flex: 1 },
+  settingTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
+  dangerText:   { color: COLORS.danger },
+  settingDesc:  { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
 
   goalChip: {
     flexDirection: 'row',
@@ -302,11 +274,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
   },
-  goalChipText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
+  goalChipText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
   goalEditRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -322,18 +290,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     textAlign: 'right',
   },
-  goalUnit: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-    marginLeft: 2,
-  },
+  goalUnit: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '600', marginLeft: 2 },
 
   presetRow: {
     flexDirection: 'row',
     gap: 8,
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
     paddingTop: 4,
   },
   presetChip: {
@@ -343,29 +306,26 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backgroundDark,
     alignItems: 'center',
   },
-  presetChipActive: {
-    backgroundColor: COLORS.primary,
-  },
-  presetChipText: {
-    fontSize: 13,
-    fontWeight: '700',
+  presetChipActive:     { backgroundColor: COLORS.primary },
+  presetChipText:       { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
+  presetChipTextActive: { color: COLORS.textWhite },
+
+  goalHint: {
+    fontSize: 12,
     color: COLORS.textSecondary,
-  },
-  presetChipTextActive: {
-    color: COLORS.textWhite,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    fontWeight: '500',
   },
 
-  taglineContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    gap: 4,
-  },
+  taglineContainer: { alignItems: 'center', paddingVertical: 20, gap: 4 },
   taglineEmoji: { fontSize: 24 },
   tagline: {
     fontSize: 13,
     color: COLORS.textSecondary,
     fontWeight: '500',
     fontStyle: 'italic',
+    textAlign: 'center',
   },
 
   bottomPadding: { height: 20 },
