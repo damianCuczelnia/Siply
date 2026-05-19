@@ -111,4 +111,4 @@ utils/
 
 ## Autor
 
-**Damian Chymkowski** — projekt studencki, Polska, 2025
+**Damian Chymkowski** — projekt studencki, 2026
