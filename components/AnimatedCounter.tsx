@@ -5,32 +5,35 @@ interface Props {
   value: number;
   style?: TextStyle;
   duration?: number;
+  /** Decimal places to show, default 0 */
+  decimals?: number;
 }
 
-// Counts up from the previous value to the new value smoothly.
-export function AnimatedCounter({ value, style, duration = 500 }: Props) {
+export function AnimatedCounter({ value, style, duration = 500, decimals = 0 }: Props) {
   const animValue = useRef(new Animated.Value(value)).current;
   const prevValue = useRef(value);
-  const displayRef = useRef(value);
-
-  const [display, setDisplay] = React.useState(value);
+  const [display, setDisplay] = React.useState(value.toFixed(decimals));
 
   useEffect(() => {
     if (value === prevValue.current) return;
+
+    const listener = animValue.addListener(({ value: v }) => {
+      setDisplay(v.toFixed(decimals));
+    });
 
     Animated.timing(animValue, {
       toValue: value,
       duration,
       useNativeDriver: false,
-    }).start();
-
-    const listener = animValue.addListener(({ value: v }) => {
-      setDisplay(Math.round(v));
+    }).start(() => {
+      animValue.removeListener(listener);
+      // Ensure final value is exact
+      setDisplay(value.toFixed(decimals));
     });
 
     prevValue.current = value;
     return () => animValue.removeListener(listener);
-  }, [value, duration, animValue]);
+  }, [value, duration, decimals, animValue]);
 
   return <Text style={style}>{display}</Text>;
 }

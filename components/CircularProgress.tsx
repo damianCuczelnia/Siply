@@ -192,7 +192,8 @@ export function CircularProgress({ size, strokeWidth, progress, totalMl, goalMl 
       <View style={styles.center} pointerEvents="none">
         <View style={styles.amountRow}>
           <AnimatedCounter
-            value={totalMl >= 1000 ? Math.round(totalMl / 10) / 100 : totalMl}
+            value={totalMl >= 1000 ? totalMl / 1000 : totalMl}
+            decimals={totalMl >= 1000 ? 1 : 0}
             style={styles.amountText}
             duration={1200}
           />
