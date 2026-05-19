@@ -1,5 +1,5 @@
 export const COLORS = {
-  // Primary water-themed palette
+  // Paleta kolorów aplikacji
   primary: '#3B9EE8',
   primaryLight: '#6BB8F0',
   primaryDark: '#1E7CC8',
@@ -27,12 +27,12 @@ export const COLORS = {
   textLight: '#A8C4D8',
   textWhite: '#FFFFFF',
 
-  // State colors
+  // Kolory stanów
   success: '#4CAF82',
   warning: '#FFB347',
   danger: '#FF6B6B',
 
-  // Shadow
+  // Cień
   shadow: '#3B9EE8',
 } as const;
 

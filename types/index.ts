@@ -2,13 +2,13 @@ export interface DayRecord {
   date: string;
   entries: WaterEntry[];
   totalMl: number;
-  bottles?: BottleEntry[];  // optional — backwards compat
+  bottles?: BottleEntry[];  // opcjonalne — kompatybilność wsteczna
 }
 
 export interface WaterEntry {
   id: string;
-  amount: number;    // in ml
-  timestamp: number; // ms
+  amount: number;    // w ml
+  timestamp: number; // ms od epoch
 }
 
 export type BottleKind = 'PET' | 'CAN' | 'GLASS';
