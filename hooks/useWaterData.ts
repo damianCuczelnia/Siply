@@ -86,20 +86,16 @@ export function useWaterData() {
   }, []);
 
   const addBottle = useCallback(async (
-    kind: BottleKind, sizeL: number, depositZl: number, amountMl: number,
+    kind: BottleKind, sizeL: number, depositZl: number,
   ) => {
-    const updated = await addBottleEntry(kind, sizeL, depositZl, amountMl);
-    setState((prev) => {
-      const newPendingBottles = prev.pendingBottles + 1;
-      const newPendingZl      = prev.pendingZl + depositZl;
-      return {
-        ...prev,
-        todayRecord: updated,
-        weekRecords: { ...prev.weekRecords, [updated.date]: updated },
-        pendingBottles: newPendingBottles,
-        pendingZl:      newPendingZl,
-      };
-    });
+    const updated = await addBottleEntry(kind, sizeL, depositZl);
+    setState((prev) => ({
+      ...prev,
+      todayRecord: updated,
+      weekRecords: { ...prev.weekRecords, [updated.date]: updated },
+      pendingBottles: prev.pendingBottles + 1,
+      pendingZl:      prev.pendingZl + depositZl,
+    }));
   }, []);
 
   const returnBottles = useCallback(async (count: number, earnedZl: number) => {

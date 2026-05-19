@@ -121,23 +121,17 @@ export async function addBottleEntry(
   kind: BottleKind,
   sizeL: number,
   depositZl: number,
-  amountMl: number,
 ): Promise<DayRecord> {
-  const key     = getTodayKey();
-  const records = await getAllRecords();
+  const key      = getTodayKey();
+  const records  = await getAllRecords();
   const existing = records[key] ?? { date: key, entries: [], totalMl: 0, bottles: [] };
 
-  const waterEntry: WaterEntry = {
-    id: generateEntryId(), amount: amountMl, timestamp: Date.now(),
-  };
   const bottleEntry: BottleEntry = {
     id: generateEntryId(), kind, sizeL, depositZl, timestamp: Date.now(),
   };
 
   const updated: DayRecord = {
     ...existing,
-    entries: [...existing.entries, waterEntry],
-    totalMl: existing.totalMl + amountMl,
     bottles: [...(existing.bottles ?? []), bottleEntry],
   };
 

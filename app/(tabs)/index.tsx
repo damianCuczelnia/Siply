@@ -125,11 +125,9 @@ export default function TodayScreen() {
     kind: import('@/types').BottleKind,
     sizeL: number,
     depositZl: number,
-    amountMl: number,
   ) => {
-    spawnDrop(amountMl);
-    await addBottle(kind, sizeL, depositZl, amountMl);
-  }, [addBottle, spawnDrop]);
+    await addBottle(kind, sizeL, depositZl);
+  }, [addBottle]);
 
   const handleReturnBottles = useCallback(() => {
     if (pendingBottles === 0) return;
@@ -254,7 +252,7 @@ export default function TodayScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Butelki kaucjonowane</Text>
-                  <Text style={styles.sectionHint}>tapnij = dodaj + woda</Text>
+                  <Text style={styles.sectionHint}>zaznacz co masz do oddania</Text>
                 </View>
                 <View style={styles.bottleGrid}>
                   {BOTTLE_OPTIONS.map((opt, i) => (
@@ -262,7 +260,7 @@ export default function TodayScreen() {
                       key={i}
                       style={[styles.bottleBtn, { borderColor: opt.color + '40' }]}
                       activeOpacity={0.75}
-                      onPress={() => handleAddBottle(opt.kind, opt.sizeL, opt.depositZl, opt.amountMl)}
+                      onPress={() => handleAddBottle(opt.kind, opt.sizeL, opt.depositZl)}
                     >
                       <Ionicons name={opt.icon as any} size={18} color={opt.color} />
                       <Text style={[styles.bottleBtnLabel, { color: opt.color }]}>{opt.label}</Text>
