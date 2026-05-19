@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 
-import { CircularProgress } from '@/components/CircularProgress';
+import { WaterBottle } from '@/components/WaterBottle';
 import { QuickAddButton } from '@/components/QuickAddButton';
 import { FlyingDrop } from '@/components/FlyingDrop';
 import { useWaterData } from '@/hooks/useWaterData';
@@ -96,9 +96,8 @@ export default function TodayScreen() {
   const openModal = useCallback(() => {
     setCustomAmountVisible(true);
     modalAnim.setValue(0);
-    Animated.spring(modalAnim, { toValue: 1, speed: 18, bounciness: 4, useNativeDriver: true }).start(() => {
-      inputRef.current?.focus();
-    });
+    Animated.spring(modalAnim, { toValue: 1, speed: 22, bounciness: 2, useNativeDriver: true }).start();
+    setTimeout(() => inputRef.current?.focus(), 250);
   }, [modalAnim]);
 
   const closeModal = useCallback(() => {
@@ -166,9 +165,7 @@ export default function TodayScreen() {
               {/* Progress ring + flying drops */}
               <View style={styles.ringWrapper}>
                 <Animated.View style={{ transform: [{ scale: ringScale }] }}>
-                  <CircularProgress
-                    size={220}
-                    strokeWidth={18}
+                  <WaterBottle
                     progress={progress}
                     totalMl={totalMl}
                     goalMl={goalMl}
