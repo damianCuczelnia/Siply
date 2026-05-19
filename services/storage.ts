@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DayRecord, AppSettings, WaterEntry } from '@/types';
+import { DayRecord, AppSettings, WaterEntry, BottleEntry, BottleReturn, BottleKind } from '@/types';
 import { STORAGE_KEYS, DEFAULT_DAILY_GOAL_ML } from '@/constants';
 import { getTodayKey, generateEntryId } from '@/utils/dateUtils';
 
@@ -112,7 +112,56 @@ export async function undoLastEntry(): Promise<DayRecord> {
 }
 
 export async function resetAllData(): Promise<void> {
-  await AsyncStorage.removeItem(STORAGE_KEYS.WATER_RECORDS);
+  await AsyncStorage.multiRemove([STORAGE_KEYS.WATER_RECORDS, STORAGE_KEYS.BOTTLE_RETURNS]);
+}
+
+// ─── Bottles ──────────────────────────────────────────────────────────────────
+
+export async function addBottleEntry(
+  kind: BottleKind,
+  sizeL: number,
+  depositZl: number,
+  amountMl: number,
+): Promise<DayRecord> {
+  const key     = getTodayKey();
+  const records = await getAllRecords();
+  const existing = records[key] ?? { date: key, entries: [], totalMl: 0, bottles: [] };
+
+  const waterEntry: WaterEntry = {
+    id: generateEntryId(), amount: amountMl, timestamp: Date.now(),
+  };
+  const bottleEntry: BottleEntry = {
+    id: generateEntryId(), kind, sizeL, depositZl, timestamp: Date.now(),
+  };
+
+  const updated: DayRecord = {
+    ...existing,
+    entries: [...existing.entries, waterEntry],
+    totalMl: existing.totalMl + amountMl,
+    bottles: [...(existing.bottles ?? []), bottleEntry],
+  };
+
+  records[key] = updated;
+  await saveAllRecords(records);
+  return updated;
+}
+
+export async function getBottleReturns(): Promise<BottleReturn[]> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEYS.BOTTLE_RETURNS);
+  return raw ? JSON.parse(raw) : [];
+}
+
+export async function addBottleReturn(count: number, earnedZl: number): Promise<void> {
+  const returns  = await getBottleReturns();
+  const entry: BottleReturn = {
+    id: generateEntryId(), count, earnedZl, timestamp: Date.now(),
+  };
+  await AsyncStorage.setItem(STORAGE_KEYS.BOTTLE_RETURNS, JSON.stringify([...returns, entry]));
+}
+
+export async function getAllBottlesUsed(): Promise<BottleEntry[]> {
+  const records = await getAllRecords();
+  return Object.values(records).flatMap(r => r.bottles ?? []);
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────

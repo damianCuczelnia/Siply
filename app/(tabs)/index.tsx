@@ -23,7 +23,7 @@ import { QuickAddButton } from '@/components/QuickAddButton';
 import { FlyingDrop } from '@/components/FlyingDrop';
 import { useWaterData } from '@/hooks/useWaterData';
 import { useSettings } from '@/hooks/useSettings';
-import { COLORS, QUICK_ADD_OPTIONS } from '@/constants';
+import { COLORS, QUICK_ADD_OPTIONS, BOTTLE_OPTIONS } from '@/constants';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import {
   getGreeting,
@@ -40,7 +40,10 @@ interface FlyingDropEntry {
 }
 
 export default function TodayScreen() {
-  const { todayRecord, isLoading, addWater, undoLast, refresh } = useWaterData();
+  const {
+    todayRecord, isLoading, addWater, undoLast, refresh,
+    addBottle, returnBottles, pendingBottles, pendingZl,
+  } = useWaterData();
   const { settings } = useSettings();
 
   const [customAmountVisible, setCustomAmountVisible] = useState(false);
@@ -117,6 +120,35 @@ export default function TodayScreen() {
     handleAddWater(amount);
     closeModal();
   }, [customInput, handleAddWater, closeModal]);
+
+  const handleAddBottle = useCallback(async (
+    kind: import('@/types').BottleKind,
+    sizeL: number,
+    depositZl: number,
+    amountMl: number,
+  ) => {
+    spawnDrop(amountMl);
+    await addBottle(kind, sizeL, depositZl, amountMl);
+  }, [addBottle, spawnDrop]);
+
+  const handleReturnBottles = useCallback(() => {
+    if (pendingBottles === 0) return;
+    const zlStr = pendingZl.toFixed(2);
+    const label = pendingBottles === 1 ? 'butelkę' : pendingBottles < 5 ? 'butelki' : 'butelek';
+    Alert.alert(
+      'Oddajesz butelki',
+      `Zwracasz ${pendingBottles} ${label} i zgarniasz ${zlStr} zł kaucji. Tak?`,
+      [
+        { text: 'Nie teraz', style: 'cancel' },
+        {
+          text: `Tak, biorę ${zlStr} zł!`,
+          onPress: () => returnBottles(pendingBottles, pendingZl),
+        },
+      ],
+    );
+  }, [pendingBottles, pendingZl, returnBottles]);
+
+  const todayBottles = todayRecord?.bottles?.length ?? 0;
 
   const totalMl   = todayRecord?.totalMl ?? 0;
   const goalMl    = settings.dailyGoalMl;
@@ -217,6 +249,59 @@ export default function TodayScreen() {
                 <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
                 <Text style={styles.customAddText}>Własna ilość</Text>
               </TouchableOpacity>
+
+              {/* Bottle deposit section */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Butelki kaucjonowane</Text>
+                  <Text style={styles.sectionHint}>tapnij = dodaj + woda</Text>
+                </View>
+                <View style={styles.bottleGrid}>
+                  {BOTTLE_OPTIONS.map((opt, i) => (
+                    <TouchableOpacity
+                      key={i}
+                      style={[styles.bottleBtn, { borderColor: opt.color + '40' }]}
+                      activeOpacity={0.75}
+                      onPress={() => handleAddBottle(opt.kind, opt.sizeL, opt.depositZl, opt.amountMl)}
+                    >
+                      <Ionicons name={opt.icon as any} size={18} color={opt.color} />
+                      <Text style={[styles.bottleBtnLabel, { color: opt.color }]}>{opt.label}</Text>
+                      <Text style={styles.bottleBtnSub}>{opt.sublabel}</Text>
+                      <View style={[styles.depositBadge, { backgroundColor: opt.color + '20' }]}>
+                        <Text style={[styles.depositBadgeText, { color: opt.color }]}>
+                          {opt.depositZl.toFixed(2)} zł
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {pendingBottles > 0 && (
+                  <View style={styles.pendingCard}>
+                    <View style={styles.pendingInfo}>
+                      <Ionicons name="bag-handle-outline" size={22} color={COLORS.warning} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.pendingTitle}>
+                          {pendingBottles} {pendingBottles === 1 ? 'butelka' : pendingBottles < 5 ? 'butelki' : 'butelek'} do oddania
+                        </Text>
+                        <Text style={styles.pendingValue}>
+                          Kaucja: {pendingZl.toFixed(2)} zł
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity style={styles.returnBtn} onPress={handleReturnBottles}>
+                      <Text style={styles.returnBtnText}>Oddaję!</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {todayBottles > 0 && pendingBottles === 0 && (
+                  <View style={styles.allReturnedBanner}>
+                    <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                    <Text style={styles.allReturnedText}>Wszystkie butelki oddane</Text>
+                  </View>
+                )}
+              </View>
 
               {/* Today's log */}
               {todayRecord && todayRecord.entries.length > 0 && (
@@ -595,6 +680,61 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalConfirmText: { fontSize: 15, color: COLORS.textWhite, fontWeight: '700' },
+
+  sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
+  sectionHint:   { fontSize: 11, color: COLORS.textLight, fontWeight: '500' },
+
+  bottleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  bottleBtn: {
+    width: '30%',
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    backgroundColor: COLORS.backgroundCard,
+    borderWidth: 1.5,
+    gap: 3,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  bottleBtnLabel: { fontSize: 15, fontWeight: '800', letterSpacing: -0.3 },
+  bottleBtnSub:   { fontSize: 10, color: COLORS.textLight, fontWeight: '600' },
+  depositBadge:   { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, marginTop: 2 },
+  depositBadgeText: { fontSize: 11, fontWeight: '700' },
+
+  pendingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8EE',
+    borderRadius: 16,
+    padding: 14,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#FFE0A0',
+  },
+  pendingInfo:  { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  pendingTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  pendingValue: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2, fontWeight: '500' },
+  returnBtn: {
+    backgroundColor: COLORS.warning,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 12,
+  },
+  returnBtnText: { fontSize: 13, fontWeight: '800', color: '#fff' },
+
+  allReturnedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    justifyContent: 'center',
+  },
+  allReturnedText: { fontSize: 13, color: COLORS.success, fontWeight: '600' },
 
   accessory: {
     flexDirection: 'row',

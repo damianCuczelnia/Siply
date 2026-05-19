@@ -1,48 +1,78 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DayRecord } from '@/types';
+import { DayRecord, BottleReturn, BottleKind } from '@/types';
 import {
   getTodayRecord,
   addWaterEntry,
   undoLastEntry,
   getRecordsForDates,
+  addBottleEntry,
+  getBottleReturns,
+  addBottleReturn,
+  getAllBottlesUsed,
 } from '@/services/storage';
 import { getLast7DaysKeys } from '@/utils/dateUtils';
 
 interface WaterDataState {
-  todayRecord: DayRecord | null;
-  weekRecords: Record<string, DayRecord>;
-  isLoading: boolean;
+  todayRecord:      DayRecord | null;
+  weekRecords:      Record<string, DayRecord>;
+  isLoading:        boolean;
+  bottleReturns:    BottleReturn[];
+  pendingBottles:   number;
+  pendingZl:        number;
+  totalEarnedZl:    number;
+  totalReturnedCount: number;
 }
 
 export function useWaterData() {
   const [state, setState] = useState<WaterDataState>({
-    todayRecord: null,
-    weekRecords: {},
-    isLoading: true,
+    todayRecord:        null,
+    weekRecords:        {},
+    isLoading:          true,
+    bottleReturns:      [],
+    pendingBottles:     0,
+    pendingZl:          0,
+    totalEarnedZl:      0,
+    totalReturnedCount: 0,
   });
 
   const loadData = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoading: true }));
-    const [today, weekRecords] = await Promise.all([
+
+    const [today, weekRecords, returns, allBottles] = await Promise.all([
       getTodayRecord(),
       getRecordsForDates(getLast7DaysKeys()),
+      getBottleReturns(),
+      getAllBottlesUsed(),
     ]);
-    setState({ todayRecord: today, weekRecords, isLoading: false });
+
+    const totalUsed          = allBottles.length;
+    const totalReturnedCount = returns.reduce((s, r) => s + r.count, 0);
+    const pendingBottles     = Math.max(0, totalUsed - totalReturnedCount);
+    const pendingZl          = allBottles
+      .slice(totalReturnedCount)
+      .reduce((s, b) => s + b.depositZl, 0);
+    const totalEarnedZl      = returns.reduce((s, r) => s + r.earnedZl, 0);
+
+    setState({
+      todayRecord: today,
+      weekRecords,
+      isLoading: false,
+      bottleReturns:    returns,
+      pendingBottles,
+      pendingZl:        Math.max(0, pendingZl),
+      totalEarnedZl,
+      totalReturnedCount,
+    });
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   const addWater = useCallback(async (amountMl: number) => {
     const updated = await addWaterEntry(amountMl);
     setState((prev) => ({
       ...prev,
       todayRecord: updated,
-      weekRecords: {
-        ...prev.weekRecords,
-        [updated.date]: updated,
-      },
+      weekRecords: { ...prev.weekRecords, [updated.date]: updated },
     }));
   }, []);
 
@@ -51,10 +81,39 @@ export function useWaterData() {
     setState((prev) => ({
       ...prev,
       todayRecord: updated,
-      weekRecords: {
-        ...prev.weekRecords,
-        [updated.date]: updated,
-      },
+      weekRecords: { ...prev.weekRecords, [updated.date]: updated },
+    }));
+  }, []);
+
+  const addBottle = useCallback(async (
+    kind: BottleKind, sizeL: number, depositZl: number, amountMl: number,
+  ) => {
+    const updated = await addBottleEntry(kind, sizeL, depositZl, amountMl);
+    setState((prev) => {
+      const newPendingBottles = prev.pendingBottles + 1;
+      const newPendingZl      = prev.pendingZl + depositZl;
+      return {
+        ...prev,
+        todayRecord: updated,
+        weekRecords: { ...prev.weekRecords, [updated.date]: updated },
+        pendingBottles: newPendingBottles,
+        pendingZl:      newPendingZl,
+      };
+    });
+  }, []);
+
+  const returnBottles = useCallback(async (count: number, earnedZl: number) => {
+    await addBottleReturn(count, earnedZl);
+    setState((prev) => ({
+      ...prev,
+      pendingBottles:     Math.max(0, prev.pendingBottles - count),
+      pendingZl:          Math.max(0, prev.pendingZl - earnedZl),
+      totalEarnedZl:      prev.totalEarnedZl + earnedZl,
+      totalReturnedCount: prev.totalReturnedCount + count,
+      bottleReturns:      [
+        ...prev.bottleReturns,
+        { id: '', count, earnedZl, timestamp: Date.now() },
+      ],
     }));
   }, []);
 
@@ -62,6 +121,8 @@ export function useWaterData() {
     ...state,
     addWater,
     undoLast,
+    addBottle,
+    returnBottles,
     refresh: loadData,
   };
 }

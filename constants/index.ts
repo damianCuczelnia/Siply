@@ -41,9 +41,29 @@ export const QUICK_ADD_OPTIONS = [100, 250, 330, 500] as const;
 export const DEFAULT_DAILY_GOAL_ML = 2000;
 
 export const STORAGE_KEYS = {
-  WATER_RECORDS: 'siply_water_records',
-  SETTINGS: 'siply_settings',
+  WATER_RECORDS:   'siply_water_records',
+  SETTINGS:        'siply_settings',
+  BOTTLE_RETURNS:  'siply_bottle_returns',
 } as const;
+
+import { BottleKind } from '@/types';
+
+export const BOTTLE_OPTIONS: {
+  kind: BottleKind;
+  label: string;
+  sublabel: string;
+  sizeL: number;
+  depositZl: number;
+  amountMl: number;
+  icon: string;
+  color: string;
+}[] = [
+  { kind: 'PET',   label: '0.5 L',  sublabel: 'Plastik',  sizeL: 0.5, depositZl: 0.50, amountMl: 500,  icon: 'water-outline',    color: '#3B9EE8' },
+  { kind: 'PET',   label: '1 L',    sublabel: 'Plastik',  sizeL: 1.0, depositZl: 0.50, amountMl: 1000, icon: 'water-outline',    color: '#3B9EE8' },
+  { kind: 'PET',   label: '1.5 L',  sublabel: 'Plastik',  sizeL: 1.5, depositZl: 0.50, amountMl: 1500, icon: 'water-outline',    color: '#3B9EE8' },
+  { kind: 'CAN',   label: '0.33 L', sublabel: 'Puszka',   sizeL: 0.33, depositZl: 0.50, amountMl: 330, icon: 'beer-outline',     color: '#FFB347' },
+  { kind: 'GLASS', label: '0.5 L',  sublabel: 'Szkło',    sizeL: 0.5, depositZl: 1.00, amountMl: 500,  icon: 'wine-outline',     color: '#4CAF82' },
+];
 
 export const APP_INFO = {
   name: 'Siply',

@@ -43,12 +43,15 @@ function AnimatedSection({
 }
 
 export default function StatisticsScreen() {
-  const { weekRecords, isLoading, refresh } = useWaterData();
+  const {
+    weekRecords, isLoading, refresh,
+    pendingBottles, pendingZl, totalEarnedZl, totalReturnedCount,
+  } = useWaterData();
   const { settings } = useSettings();
 
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
 
-  const last7Days = getLast7DaysKeys();
+  const last7Days       = getLast7DaysKeys();
   const goalMl    = settings.dailyGoalMl;
 
   const dayValues    = last7Days.map((d) => weekRecords[d]?.totalMl ?? 0);
@@ -63,8 +66,12 @@ export default function StatisticsScreen() {
   const bestDayIndex = dayValues.indexOf(bestDayMl);
   const bestDate     = bestDayMl > 0 && bestDayIndex >= 0 ? last7Days[bestDayIndex] : null;
 
-  const goalsMetCount = dayValues.filter((v) => v >= goalMl).length;
-  const totalWeekMl   = dayValues.reduce((a, b) => a + b, 0);
+  const goalsMetCount    = dayValues.filter((v) => v >= goalMl).length;
+  const totalWeekMl      = dayValues.reduce((a, b) => a + b, 0);
+  const bottlesThisWeek  = last7Days.reduce((s, d) => s + (weekRecords[d]?.bottles?.length ?? 0), 0);
+  const earnedThisWeek   = last7Days.reduce(
+    (s, d) => s + (weekRecords[d]?.bottles?.reduce((bs, b) => bs + b.depositZl, 0) ?? 0), 0
+  );
 
   const mlLabel = (ml: number) =>
     ml >= 1000 ? `${(ml / 1000).toFixed(1)} L` : `${ml} ml`;
@@ -178,6 +185,52 @@ export default function StatisticsScreen() {
                   </View>
                 </View>
               </AnimatedSection>
+              <AnimatedSection delay={400}>
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Butelki kaucjonowane</Text>
+
+                  <View style={styles.bottleStatsGrid}>
+                    <View style={styles.bottleStatBox}>
+                      <Text style={styles.bottleStatValue}>{bottlesThisWeek}</Text>
+                      <Text style={styles.bottleStatLabel}>w tym tygodniu</Text>
+                    </View>
+                    <View style={[styles.bottleStatBox, styles.bottleStatBoxAccent]}>
+                      <Text style={[styles.bottleStatValue, { color: COLORS.success }]}>
+                        {earnedThisWeek.toFixed(2)} zł
+                      </Text>
+                      <Text style={styles.bottleStatLabel}>kaucja tygodnia</Text>
+                    </View>
+                    <View style={styles.bottleStatBox}>
+                      <Text style={styles.bottleStatValue}>{totalReturnedCount}</Text>
+                      <Text style={styles.bottleStatLabel}>oddanych łącznie</Text>
+                    </View>
+                    <View style={[styles.bottleStatBox, styles.bottleStatBoxAccent]}>
+                      <Text style={[styles.bottleStatValue, { color: COLORS.success }]}>
+                        {totalEarnedZl.toFixed(2)} zł
+                      </Text>
+                      <Text style={styles.bottleStatLabel}>zarobione łącznie</Text>
+                    </View>
+                  </View>
+
+                  {pendingBottles > 0 ? (
+                    <View style={styles.pendingRow}>
+                      <Ionicons name="bag-handle-outline" size={16} color={COLORS.warning} />
+                      <Text style={styles.pendingText}>
+                        {pendingBottles} {pendingBottles === 1 ? 'butelka czeka' : pendingBottles < 5 ? 'butelki czekają' : 'butelek czeka'} na oddanie
+                        {' '}•{' '}
+                        <Text style={styles.pendingZl}>{pendingZl.toFixed(2)} zł</Text>
+                      </Text>
+                    </View>
+                  ) : totalReturnedCount > 0 ? (
+                    <View style={styles.pendingRow}>
+                      <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                      <Text style={[styles.pendingText, { color: COLORS.success }]}>
+                        Wszystkie butelki oddane!
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </AnimatedSection>
             </>
           ) : (
             <AnimatedSection delay={80}>
@@ -289,4 +342,21 @@ const styles = StyleSheet.create({
   },
 
   bottomPadding: { height: 20 },
+
+  bottleStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
+  bottleStatBox: {
+    flex: 1,
+    minWidth: '40%',
+    backgroundColor: COLORS.backgroundDark,
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+  },
+  bottleStatBoxAccent: { backgroundColor: '#E8F8EF' },
+  bottleStatValue: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5 },
+  bottleStatLabel: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '600', marginTop: 2, textAlign: 'center' },
+
+  pendingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 4 },
+  pendingText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500', flex: 1 },
+  pendingZl:   { fontWeight: '700', color: COLORS.warning },
 });
