@@ -44,6 +44,7 @@ export default function TodayScreen() {
 
   const [customAmountVisible, setCustomAmountVisible] = useState(false);
   const [customInput, setCustomInput]                 = useState('');
+  const modalAnim  = useRef(new Animated.Value(0)).current; // 0=hidden 1=visible
   const [flyingDrops, setFlyingDrops]                 = useState<FlyingDropEntry[]>([]);
   const dropIdRef = useRef(0);
 
@@ -91,6 +92,19 @@ export default function TodayScreen() {
     ]);
   }, [todayRecord, undoLast]);
 
+  const openModal = useCallback(() => {
+    setCustomAmountVisible(true);
+    modalAnim.setValue(0);
+    Animated.spring(modalAnim, { toValue: 1, speed: 18, bounciness: 4, useNativeDriver: true }).start();
+  }, [modalAnim]);
+
+  const closeModal = useCallback(() => {
+    Animated.timing(modalAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => {
+      setCustomAmountVisible(false);
+      setCustomInput('');
+    });
+  }, [modalAnim]);
+
   const handleCustomAdd = useCallback(() => {
     const amount = parseInt(customInput, 10);
     if (isNaN(amount) || amount <= 0 || amount > 5000) {
@@ -98,9 +112,8 @@ export default function TodayScreen() {
       return;
     }
     handleAddWater(amount);
-    setCustomInput('');
-    setCustomAmountVisible(false);
-  }, [customInput, handleAddWater]);
+    closeModal();
+  }, [customInput, handleAddWater, closeModal]);
 
   const totalMl   = todayRecord?.totalMl ?? 0;
   const goalMl    = settings.dailyGoalMl;
@@ -197,7 +210,7 @@ export default function TodayScreen() {
               {/* Custom amount */}
               <TouchableOpacity
                 style={styles.customAddButton}
-                onPress={() => setCustomAmountVisible(true)}
+                onPress={openModal}
                 activeOpacity={0.8}
               >
                 <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
@@ -265,19 +278,40 @@ export default function TodayScreen() {
       <Modal
         visible={customAmountVisible}
         transparent
-        animationType="slide"
-        onRequestClose={() => setCustomAmountVisible(false)}
+        animationType="none"
+        onRequestClose={closeModal}
       >
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setCustomAmountVisible(false)}
+          {/* Overlay — fade in */}
+          <Animated.View
+            style={[
+              styles.modalOverlay,
+              { opacity: modalAnim },
+            ]}
           >
-            <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={closeModal}
+            />
+
+            {/* Card — slide up */}
+            <Animated.View
+              style={[
+                styles.modalCard,
+                {
+                  transform: [{
+                    translateY: modalAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [300, 0],
+                    }),
+                  }],
+                },
+              ]}
+            >
               <Text style={styles.modalTitle}>Ile wypiłeś?</Text>
               <Text style={styles.modalSubtitle}>Wpisz ilość w mililitrach</Text>
 
@@ -303,13 +337,7 @@ export default function TodayScreen() {
               </View>
 
               <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={styles.modalCancel}
-                  onPress={() => {
-                    setCustomInput('');
-                    setCustomAmountVisible(false);
-                  }}
-                >
+                <TouchableOpacity style={styles.modalCancel} onPress={closeModal}>
                   <Text style={styles.modalCancelText}>Anuluj</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.modalConfirm} onPress={handleCustomAdd}>
@@ -317,8 +345,8 @@ export default function TodayScreen() {
                   <Text style={styles.modalConfirmText}>Dodaj</Text>
                 </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
+            </Animated.View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
     </LinearGradient>
@@ -469,7 +497,7 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(30,60,90,0.35)',
+    backgroundColor: 'rgba(30,60,90,0.4)',
     justifyContent: 'flex-end',
     padding: 16,
     paddingBottom: 16,
