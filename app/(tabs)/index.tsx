@@ -44,7 +44,8 @@ export default function TodayScreen() {
 
   const [customAmountVisible, setCustomAmountVisible] = useState(false);
   const [customInput, setCustomInput]                 = useState('');
-  const modalAnim  = useRef(new Animated.Value(0)).current; // 0=hidden 1=visible
+  const modalAnim  = useRef(new Animated.Value(0)).current;
+  const inputRef   = useRef<TextInput>(null);
   const [flyingDrops, setFlyingDrops]                 = useState<FlyingDropEntry[]>([]);
   const dropIdRef = useRef(0);
 
@@ -95,7 +96,9 @@ export default function TodayScreen() {
   const openModal = useCallback(() => {
     setCustomAmountVisible(true);
     modalAnim.setValue(0);
-    Animated.spring(modalAnim, { toValue: 1, speed: 18, bounciness: 4, useNativeDriver: true }).start();
+    Animated.spring(modalAnim, { toValue: 1, speed: 18, bounciness: 4, useNativeDriver: true }).start(() => {
+      inputRef.current?.focus();
+    });
   }, [modalAnim]);
 
   const closeModal = useCallback(() => {
@@ -324,7 +327,7 @@ export default function TodayScreen() {
                   placeholder="np. 400"
                   placeholderTextColor={COLORS.textLight}
                   keyboardType="number-pad"
-                  autoFocus
+                  ref={inputRef}
                   returnKeyType="done"
                   onSubmitEditing={handleCustomAdd}
                   maxLength={4}
