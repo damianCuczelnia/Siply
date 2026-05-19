@@ -11,6 +11,7 @@ import {
   Platform,
   Modal,
   Animated,
+  InputAccessoryView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -330,6 +331,7 @@ export default function TodayScreen() {
                   maxLength={4}
                   selectionColor={COLORS.primary}
                   underlineColorAndroid="transparent"
+                  inputAccessoryViewID="waterAmount"
                 />
                 <View style={styles.inputUnitBox}>
                   <Text style={styles.inputUnit}>ml</Text>
@@ -349,6 +351,19 @@ export default function TodayScreen() {
           </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID="waterAmount">
+          <View style={styles.accessory}>
+            <TouchableOpacity onPress={closeModal} style={styles.accessoryCancel}>
+              <Text style={styles.accessoryCancelText}>Anuluj</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleCustomAdd} style={styles.accessoryConfirm}>
+              <Text style={styles.accessoryConfirmText}>Dodaj</Text>
+            </TouchableOpacity>
+          </View>
+        </InputAccessoryView>
+      )}
     </LinearGradient>
   );
 }
@@ -580,4 +595,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalConfirmText: { fontSize: 15, color: COLORS.textWhite, fontWeight: '700' },
+
+  accessory: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.backgroundCard,
+    borderTopWidth: 1,
+    borderTopColor: '#E8F0F8',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  accessoryCancel: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  accessoryCancelText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  accessoryConfirm: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  accessoryConfirmText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '700',
+  },
 });
