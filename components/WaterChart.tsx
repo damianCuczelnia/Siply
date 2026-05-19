@@ -5,57 +5,43 @@ import { getShortDayName, getTodayKey } from '@/utils/dateUtils';
 import { COLORS } from '@/constants';
 
 interface Props {
-  records:        Record<string, DayRecord>;
-  dates:          string[];
-  goalMl:         number;
+  records: Record<string, DayRecord>;
+  dates:   string[];
+  goalMl:  number;
 }
 
-const CHART_HEIGHT = 140;
-const BAR_RADIUS   = 8;
-const PADDING_TOP  = 20;   // room for "Cel" label above the goal line
+const CHART_H = 140;  // fixed height of the bar area — goal line never moves
 
 export function WaterChart({ records, dates, goalMl }: Props) {
   const todayKey = getTodayKey();
   const values   = dates.map(d => records[d]?.totalMl ?? 0);
 
-  // Fixed scale: always 30% above the highest of (data, goal) — goal line never moves
-  const maxData  = Math.max(...values, 1);
-  const maxValue = Math.max(maxData, goalMl) * 1.3;
-
-  // Goal line position from top of bar area (used for label)
-  const goalFraction = goalMl / maxValue;           // 0..1
-  const goalFromTop  = CHART_HEIGHT * (1 - goalFraction);  // px from top of bar container
+  // Scale: 30% headroom above the highest value OR goal — whichever is bigger.
+  // maxValue never shrinks below goalMl so the goal line stays put.
+  const maxValue     = Math.max(...values, goalMl) * 1.3;
+  const goalLineFromBottom = (goalMl / maxValue) * CHART_H;  // px from bottom of chart area
 
   return (
     <View style={styles.wrapper}>
-      {/* "Cel" label floated to the goal line position */}
-      <View style={[styles.goalLabelWrap, { top: PADDING_TOP + goalFromTop - 9 }]}>
-        <Text style={styles.goalLabel}>Cel</Text>
-      </View>
 
-      <View style={styles.barsRow}>
-        {dates.map((date, i) => {
-          const value     = values[i];
-          const barH      = Math.max((value / maxValue) * CHART_HEIGHT, value > 0 ? 4 : 0);
-          const goalLineY = goalFraction * CHART_HEIGHT;   // from bottom
-          const isToday   = date === todayKey;
-          const isGoalMet = value >= goalMl;
+      {/* ── Bar area (fixed height) ── */}
+      <View style={[styles.chartArea, { height: CHART_H }]}>
 
-          const bottleZl = records[date]?.bottles?.reduce((s, b) => s + b.depositZl, 0) ?? 0;
-
-          return (
-            <View key={date} style={styles.barColumn}>
-              <View style={[styles.barContainer, { height: CHART_HEIGHT }]}>
-                {/* Goal dashed line */}
-                <View style={[styles.goalLine, { bottom: goalLineY }]} />
-
-                {/* Bar */}
+        {/* Bars — aligned to bottom inside the fixed-height area */}
+        <View style={styles.barsRow}>
+          {dates.map((date, i) => {
+            const value    = values[i];
+            const barH     = Math.max((value / maxValue) * CHART_H, value > 0 ? 4 : 0);
+            const isToday  = date === todayKey;
+            const goalMet  = value >= goalMl;
+            return (
+              <View key={date} style={styles.barSlot}>
                 <View
                   style={[
                     styles.bar,
                     {
                       height: barH,
-                      backgroundColor: isGoalMet
+                      backgroundColor: goalMet
                         ? COLORS.success
                         : isToday
                         ? COLORS.primary
@@ -65,17 +51,38 @@ export function WaterChart({ records, dates, goalMl }: Props) {
                   ]}
                 />
               </View>
+            );
+          })}
+        </View>
 
+        {/* Single goal line — absolutely positioned in the fixed chart area */}
+        <View style={[styles.goalLine, { bottom: goalLineFromBottom }]} pointerEvents="none" />
+
+        {/* Goal label — just above the line */}
+        <Text
+          style={[styles.goalLabel, { bottom: goalLineFromBottom + 3 }]}
+          pointerEvents="none"
+        >
+          Cel
+        </Text>
+      </View>
+
+      {/* ── Labels row — completely separate from chart area ── */}
+      <View style={styles.labelsRow}>
+        {dates.map((date, i) => {
+          const value    = values[i];
+          const isToday  = date === todayKey;
+          const bottleZl = records[date]?.bottles?.reduce((s, b) => s + b.depositZl, 0) ?? 0;
+          return (
+            <View key={date} style={styles.labelSlot}>
               <Text style={[styles.dayLabel, isToday && styles.dayLabelToday]}>
                 {getShortDayName(date)}
               </Text>
-
               {value > 0 && (
                 <Text style={styles.valueLabel}>
                   {value >= 1000 ? `${(value / 1000).toFixed(1)}L` : `${value}`}
                 </Text>
               )}
-
               {bottleZl > 0 && (
                 <Text style={styles.bottleLabel}>+{bottleZl.toFixed(2)} zł</Text>
               )}
@@ -83,52 +90,67 @@ export function WaterChart({ records, dates, goalMl }: Props) {
           );
         })}
       </View>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    paddingTop: PADDING_TOP,
+  wrapper: { paddingTop: 8 },
+
+  chartArea: {
     position: 'relative',
+    overflow: 'visible',
   },
-  goalLabelWrap: {
-    position: 'absolute',
-    right: 0,
-  },
-  goalLabel: {
-    fontSize: 10,
-    color: COLORS.warning,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
+
   barsRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 6,
+    height: '100%',
   },
-  barColumn: {
+
+  barSlot: {
     flex: 1,
-    alignItems: 'center',
-    gap: 3,
-  },
-  barContainer: {
-    width: '100%',
+    height: '100%',
     justifyContent: 'flex-end',
-    position: 'relative',
   },
-  goalLine: {
-    position: 'absolute',
-    left: -3,
-    right: -3,
-    height: 1.5,
-    backgroundColor: COLORS.warning,
-    opacity: 0.55,
-  },
+
   bar: {
     width: '100%',
-    borderRadius: BAR_RADIUS,
+    borderRadius: 8,
   },
+
+  goalLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1.5,
+    backgroundColor: COLORS.warning,
+    opacity: 0.6,
+  },
+
+  goalLabel: {
+    position: 'absolute',
+    right: 0,
+    fontSize: 10,
+    color: COLORS.warning,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+
+  labelsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 6,
+  },
+
+  labelSlot: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+
   dayLabel: {
     fontSize: 11,
     color: COLORS.textSecondary,
