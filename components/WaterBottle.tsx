@@ -4,7 +4,7 @@ import Svg, { Path, Defs, ClipPath, Rect, LinearGradient, Stop, G } from 'react-
 import { COLORS } from '@/constants';
 import { AnimatedCounter } from './AnimatedCounter';
 
-// ─── SVG geometry ─────────────────────────────────────────────────────────────
+// ─── Geometria SVG butelki ────────────────────────────────────────────────────
 
 const W  = 120;
 const H  = 240;
@@ -16,7 +16,7 @@ const BL = 10, BR = 110;         // body x (left / right)
 const BB = 212;                  // body bottom y
 const CR = 18;                   // body corner radius
 
-const FILL_H = BB - NY;          // total fillable height in SVG units
+const FILL_H = BB - NY;          // całkowita wypełnialna wysokość w jednostkach SVG
 
 const BOTTLE_PATH = [
   `M ${NL},${NY} L ${NR},${NY} L ${NR},${NB}`,

@@ -32,6 +32,7 @@ export default function SettingsScreen() {
     setIsEditingGoal(false);
   };
 
+
   const handleResetData = () => {
     Alert.alert(
       'Resetuj wszystkie dane',
