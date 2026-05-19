@@ -135,7 +135,7 @@ export default function TodayScreen() {
       Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
         setToastVisible(false);
       });
-    }, 2500);
+    }, 4000);
   }, [toastAnim]);
 
   const handleAddStandardBottle = useCallback(async () => {
@@ -298,10 +298,20 @@ export default function TodayScreen() {
                   }]}>
                     <Ionicons name="bag-handle-outline" size={14} color={COLORS.warning} />
                     <Text style={styles.bottleToastText}>
-                      Masz potencjalnie {pendingBottles}{' '}
-                      {pendingBottles === 1 ? 'butelkę' : pendingBottles < 5 ? 'butelki' : 'butelek'}{' '}
-                      do oddania ({pendingZl.toFixed(2)} zł)
+                      {pendingBottles}{' '}
+                      {pendingBottles === 1 ? 'butelka' : pendingBottles < 5 ? 'butelki' : 'butelek'}{' '}
+                      do oddania · {pendingZl.toFixed(2)} zł
                     </Text>
+                    <TouchableOpacity
+                      style={styles.toastReturnBtn}
+                      onPress={() => {
+                        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                        Animated.timing(toastAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setToastVisible(false));
+                        handleReturnBottles();
+                      }}
+                    >
+                      <Text style={styles.toastReturnBtnText}>Oddaję!</Text>
+                    </TouchableOpacity>
                   </Animated.View>
                 )}
 
@@ -760,6 +770,13 @@ const styles = StyleSheet.create({
     borderColor: '#FFE0A0',
   },
   bottleToastText: { flex: 1, fontSize: 13, color: COLORS.textPrimary, fontWeight: '600' },
+  toastReturnBtn: {
+    backgroundColor: COLORS.warning,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  toastReturnBtnText: { fontSize: 12, fontWeight: '800', color: '#fff' },
 
   pendingCard: {
     flexDirection: 'row',
