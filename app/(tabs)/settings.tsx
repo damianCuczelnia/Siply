@@ -138,6 +138,56 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          {/* System kaucyjny */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>SYSTEM KAUCYJNY</Text>
+            <View style={styles.card}>
+              <View style={[styles.settingRow, styles.settingRowBorder]}>
+                <View style={styles.settingIcon}>
+                  <Ionicons name="bag-handle-outline" size={20} color={COLORS.warning} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={styles.settingTitle}>Jak to działa?</Text>
+                  <Text style={styles.settingDesc}>
+                    Zaznacz butelki z logo systemu kaucyjnego. Aplikacja liczy ile możesz odzyskać i przypomina o zwrocie.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={[styles.settingRow, styles.settingRowBorder]}>
+                <View style={[styles.settingIcon, { backgroundColor: '#EBF5FF' }]}>
+                  <Ionicons name="water-outline" size={20} color={COLORS.primary} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={styles.settingTitle}>Plastik PET / Puszka</Text>
+                  <Text style={styles.settingDesc}>Do 3 L (PET) lub do 1 L (puszka) — kaucja 0,50 zł</Text>
+                </View>
+              </View>
+
+              <View style={[styles.settingRow, styles.settingRowBorder]}>
+                <View style={[styles.settingIcon, { backgroundColor: '#E8F8EF' }]}>
+                  <Ionicons name="wine-outline" size={20} color={COLORS.success} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={styles.settingTitle}>Szkło wielorazowe</Text>
+                  <Text style={styles.settingDesc}>Do 1,5 L — kaucja 1,00 zł</Text>
+                </View>
+              </View>
+
+              <View style={styles.settingRow}>
+                <View style={[styles.settingIcon, { backgroundColor: '#FFF8EE' }]}>
+                  <Ionicons name="information-circle-outline" size={20} color={COLORS.warning} />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={styles.settingTitle}>Gdzie oddać?</Text>
+                  <Text style={styles.settingDesc}>
+                    Sklepy pow. 200 m², butelkomaty, punkty zbiórki. Paragon niepotrzebny — butelka musi mieć logo kaucji i być nieuszkodzona.
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
           {/* Dane */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>DANE</Text>
