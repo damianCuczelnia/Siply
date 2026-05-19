@@ -10,14 +10,14 @@ interface Props {
   goalMl:  number;
 }
 
-const CHART_H = 140;  // fixed height of the bar area — goal line never moves
+const CHART_H = 140;  // stała wysokość obszaru słupków — linia celu się nie przesuwa
 
 export function WaterChart({ records, dates, goalMl }: Props) {
   const todayKey = getTodayKey();
   const values   = dates.map(d => records[d]?.totalMl ?? 0);
 
-  // Scale: 30% headroom above the highest value OR goal — whichever is bigger.
-  // maxValue never shrinks below goalMl so the goal line stays put.
+  // Skala: 30% zapasu nad najwyższą wartością lub celem — cokolwiek jest większe.
+  // maxValue nigdy nie spada poniżej goalMl, żeby linia celu stała w miejscu.
   const maxValue     = Math.max(...values, goalMl) * 1.3;
   const goalLineFromBottom = (goalMl / maxValue) * CHART_H;  // px from bottom of chart area
 

@@ -51,8 +51,8 @@ export default function StatisticsScreen() {
 
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
 
-  const last7Days       = getLast7DaysKeys();
-  const goalMl    = settings.dailyGoalMl;
+  const last7Days    = getLast7DaysKeys();
+  const goalMl       = settings.dailyGoalMl;
 
   const dayValues    = last7Days.map((d) => weekRecords[d]?.totalMl ?? 0);
   const daysWithData = dayValues.filter((v) => v > 0);
