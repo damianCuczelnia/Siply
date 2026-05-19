@@ -291,29 +291,6 @@ export default function TodayScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {toastVisible && (
-                  <Animated.View style={[styles.bottleToast, {
-                    opacity: toastAnim,
-                    transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
-                  }]}>
-                    <Ionicons name="bag-handle-outline" size={14} color={COLORS.warning} />
-                    <Text style={styles.bottleToastText}>
-                      {pendingBottles}{' '}
-                      {pendingBottles === 1 ? 'butelka' : pendingBottles < 5 ? 'butelki' : 'butelek'}{' '}
-                      do oddania · {pendingZl.toFixed(2)} zł
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.toastReturnBtn}
-                      onPress={() => {
-                        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-                        Animated.timing(toastAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setToastVisible(false));
-                        handleReturnBottles();
-                      }}
-                    >
-                      <Text style={styles.toastReturnBtnText}>Oddaję!</Text>
-                    </TouchableOpacity>
-                  </Animated.View>
-                )}
 
                 {pendingBottles > 0 && (
                   <View style={styles.pendingCard}>
@@ -397,6 +374,29 @@ export default function TodayScreen() {
             </ScrollView>
           </Animated.View>
         </KeyboardAvoidingView>
+        {toastVisible && (
+          <Animated.View style={[styles.bottleToast, {
+            opacity: toastAnim,
+            transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }],
+          }]}>
+            <Ionicons name="bag-handle-outline" size={14} color={COLORS.warning} />
+            <Text style={styles.bottleToastText}>
+              {pendingBottles}{' '}
+              {pendingBottles === 1 ? 'butelka' : pendingBottles < 5 ? 'butelki' : 'butelek'}{' '}
+              do oddania · {pendingZl.toFixed(2)} zł
+            </Text>
+            <TouchableOpacity
+              style={styles.toastReturnBtn}
+              onPress={() => {
+                if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                Animated.timing(toastAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => setToastVisible(false));
+                handleReturnBottles();
+              }}
+            >
+              <Text style={styles.toastReturnBtnText}>Oddaję!</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </SafeAreaView>
 
       {/* Custom amount modal */}
@@ -758,16 +758,25 @@ const styles = StyleSheet.create({
   bottleGlassBtnText: { fontSize: 13, fontWeight: '700', color: COLORS.success },
   bottleGlassBtnSub:  { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
   bottleToast: {
+    position: 'absolute',
+    bottom: 24,
+    left: 16,
+    right: 16,
+    zIndex: 999,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     backgroundColor: '#FFF8EE',
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 10,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#FFE0A0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 8,
   },
   bottleToastText: { flex: 1, fontSize: 13, color: COLORS.textPrimary, fontWeight: '600' },
   toastReturnBtn: {
