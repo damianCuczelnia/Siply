@@ -1,41 +1,54 @@
 import React, { useRef, useEffect } from 'react';
-import { Animated, Text, StyleSheet, View } from 'react-native';
+import { Animated, Text, StyleSheet, View, Easing } from 'react-native';
 import { COLORS } from '@/constants';
 
 interface Props {
-  label: string;       // e.g. "+250 ml"
-  message?: string;    // funny subtitle
+  label: string;
+  message?: string;
   onDone: () => void;
 }
 
-// Floats a "+Xml" label upward and fades it out on mount.
 export function FlyingDrop({ label, message, onDone }: Props) {
   const translateY = useRef(new Animated.Value(0)).current;
   const opacity    = useRef(new Animated.Value(1)).current;
-  const scale      = useRef(new Animated.Value(0.5)).current;
+  const scale      = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
-    Animated.parallel([
+    Animated.sequence([
+      // 1. Wyskocz i powiększ się (wiosna, szybko)
       Animated.spring(scale, {
         toValue: 1,
-        speed: 40,
-        bounciness: 14,
+        speed: 28,
+        bounciness: 18,
         useNativeDriver: true,
       }),
-      Animated.sequence([
-        Animated.delay(200),
-        Animated.parallel([
-          Animated.timing(translateY, {
-            toValue: -110,
-            duration: 700,
-            useNativeDriver: true,
-          }),
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 700,
-            useNativeDriver: true,
-          }),
-        ]),
+      // 2. Unoś się powoli w górę przez 700ms — bańka "płynie"
+      Animated.timing(translateY, {
+        toValue: -55,
+        duration: 700,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      // 3. Wisz w miejscu przez 900ms żeby można było przeczytać
+      Animated.delay(900),
+      // 4. Odleć w górę i znikaj
+      Animated.parallel([
+        Animated.timing(translateY, {
+          toValue: -160,
+          duration: 650,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 0.7,
+          duration: 650,
+          useNativeDriver: true,
+        }),
       ]),
     ]).start(onDone);
   }, []);
@@ -43,10 +56,7 @@ export function FlyingDrop({ label, message, onDone }: Props) {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[
-        styles.container,
-        { transform: [{ translateY }, { scale }], opacity },
-      ]}
+      style={[styles.container, { transform: [{ translateY }, { scale }], opacity }]}
     >
       <View style={styles.bubble}>
         <Text style={styles.label}>{label}</Text>
@@ -87,5 +97,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 2,
     textAlign: 'center',
+    maxWidth: 200,
   },
 });
