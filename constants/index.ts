@@ -50,6 +50,5 @@ export const APP_INFO = {
   tagline: 'Nawadniaj się pięknie.',
   version: '1.0.0',
   author: 'Damian Chymkowski',
-  description:
-    'Siply pomaga śledzić dzienne spożycie wody w prosty i elegancki sposób.',
+  description: 'Siply pomaga śledzić dzienne spożycie wody w prosty i elegancki sposób.',
 } as const;

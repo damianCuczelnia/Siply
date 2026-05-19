@@ -32,7 +32,6 @@ export function QuickAddButton({ amount, onPress, style }: Props) {
         activeOpacity={0.85}
         style={styles.inner}
       >
-        <Text style={styles.dropEmoji}>💧</Text>
         <Text style={styles.amountText}>+{amount}</Text>
         <Text style={styles.unitText}>ml</Text>
       </TouchableOpacity>
@@ -58,10 +57,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 12,
     alignItems: 'center',
-  },
-  dropEmoji: {
-    fontSize: 20,
-    marginBottom: 2,
   },
   amountText: {
     fontSize: 17,

@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useSettings } from '@/hooks/useSettings';
 import { resetAllData } from '@/services/storage';
-import { COLORS, APP_INFO, DEFAULT_DAILY_GOAL_ML } from '@/constants';
+import { COLORS, APP_INFO } from '@/constants';
 
 export default function SettingsScreen() {
   const { settings, updateSettings } = useSettings();
@@ -24,7 +24,7 @@ export default function SettingsScreen() {
   const handleSaveGoal = () => {
     const value = parseInt(goalInput, 10);
     if (isNaN(value) || value < 100 || value > 10000) {
-      Alert.alert('Nieprawidłowa wartość', 'Wpisz cel od 100 do 10 000 ml. Serio.');
+      Alert.alert('Nieprawidłowa wartość', 'Wpisz cel od 100 do 10 000 ml.');
       setGoalInput(String(settings.dailyGoalMl));
     } else {
       updateSettings({ dailyGoalMl: value });
@@ -34,7 +34,7 @@ export default function SettingsScreen() {
 
   const handleResetData = () => {
     Alert.alert(
-      'Resetuj wszystkie dane 💀',
+      'Resetuj wszystkie dane',
       'Cała historia zniknie na zawsze. Naprawdę chcesz to zrobić?',
       [
         { text: 'Nie, zostawiam', style: 'cancel' },
@@ -43,7 +43,7 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             await resetAllData();
-            Alert.alert('Gotowe', 'Wszystkie dane zostały wyczyszczone. Świeży start! 🌊');
+            Alert.alert('Gotowe', 'Wszystkie dane zostały wyczyszczone. Świeży start!');
           },
         },
       ]
@@ -53,17 +53,14 @@ export default function SettingsScreen() {
   return (
     <LinearGradient colors={[COLORS.gradientStart, COLORS.gradientEnd]} style={styles.gradient}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
           <View style={styles.header}>
-            <Text style={styles.title}>Ustawienia ⚙️</Text>
+            <Text style={styles.title}>Ustawienia</Text>
             <Text style={styles.subtitle}>Dostosuj aplikację do siebie</Text>
           </View>
 
-          {/* Hydration goal */}
+          {/* Nawodnienie */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>NAWODNIENIE</Text>
             <View style={styles.card}>
@@ -74,7 +71,7 @@ export default function SettingsScreen() {
                 <View style={styles.settingInfo}>
                   <Text style={styles.settingTitle}>Dzienny cel</Text>
                   <Text style={styles.settingDesc}>
-                    Ile ml chcesz wypić każdego dnia? (Twoje nerki mają zdanie)
+                    Ile ml chcesz wypić każdego dnia?
                   </Text>
                 </View>
                 {isEditingGoal ? (
@@ -106,7 +103,6 @@ export default function SettingsScreen() {
                 )}
               </View>
 
-              {/* Preset buttons */}
               <View style={styles.presetRow}>
                 {[1500, 2000, 2500, 3000].map((preset) => (
                   <TouchableOpacity
@@ -134,15 +130,15 @@ export default function SettingsScreen() {
 
               <Text style={styles.goalHint}>
                 {settings.dailyGoalMl < 1500
-                  ? '⚠️ To trochę mało... nerki proszą o więcej!'
+                  ? 'To trochę mało — nerki proszą o więcej!'
                   : settings.dailyGoalMl >= 3000
-                  ? '💦 Ambitny cel! Jesteś wodnym mistrzem'
-                  : '👌 Solidny cel — odpowiedni dla większości'}
+                  ? 'Ambitny cel! Jesteś wodnym mistrzem.'
+                  : 'Solidny cel — odpowiedni dla większości.'}
               </Text>
             </View>
           </View>
 
-          {/* Data section */}
+          {/* Dane */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>DANE</Text>
             <View style={styles.card}>
@@ -152,22 +148,20 @@ export default function SettingsScreen() {
                 </View>
                 <View style={styles.settingInfo}>
                   <Text style={[styles.settingTitle, styles.dangerText]}>Resetuj dane</Text>
-                  <Text style={styles.settingDesc}>
-                    Usuwa całą historię. Nie ma odwrotu. Serio.
-                  </Text>
+                  <Text style={styles.settingDesc}>Usuwa całą historię. Nie ma odwrotu.</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* About */}
+          {/* O aplikacji */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>O APLIKACJI</Text>
             <View style={styles.card}>
               <View style={[styles.settingRow, styles.settingRowBorder]}>
                 <View style={styles.settingIcon}>
-                  <Text style={{ fontSize: 18 }}>💧</Text>
+                  <Ionicons name="water" size={20} color={COLORS.primary} />
                 </View>
                 <View style={styles.settingInfo}>
                   <Text style={styles.settingTitle}>{APP_INFO.name}</Text>
@@ -192,16 +186,15 @@ export default function SettingsScreen() {
                 <View style={styles.settingInfo}>
                   <Text style={styles.settingTitle}>Projekt studencki</Text>
                   <Text style={styles.settingDesc}>
-                    Zbudowany w React Native + Expo. Bo nawodnienie jest ważne.
+                    Zbudowany w React Native i Expo. Bo nawodnienie jest ważne.
                   </Text>
                 </View>
               </View>
             </View>
           </View>
 
-          {/* Tagline */}
           <View style={styles.taglineContainer}>
-            <Text style={styles.taglineEmoji}>💧</Text>
+            <Ionicons name="water" size={20} color={COLORS.primaryLight} />
             <Text style={styles.tagline}>"{APP_INFO.tagline}"</Text>
           </View>
 
@@ -215,7 +208,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
-
   scroll: { paddingHorizontal: 20, paddingTop: 8 },
 
   header:   { marginBottom: 28 },
@@ -259,8 +251,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dangerIcon: { backgroundColor: '#FFF0F0' },
-  settingInfo: { flex: 1 },
+  dangerIcon:   { backgroundColor: '#FFF0F0' },
+  settingInfo:  { flex: 1 },
   settingTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
   dangerText:   { color: COLORS.danger },
   settingDesc:  { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
@@ -299,13 +291,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     paddingTop: 4,
   },
-  presetChip: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: COLORS.backgroundDark,
-    alignItems: 'center',
-  },
+  presetChip:           { flex: 1, paddingVertical: 8, borderRadius: 10, backgroundColor: COLORS.backgroundDark, alignItems: 'center' },
   presetChipActive:     { backgroundColor: COLORS.primary },
   presetChipText:       { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
   presetChipTextActive: { color: COLORS.textWhite },
@@ -318,8 +304,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  taglineContainer: { alignItems: 'center', paddingVertical: 20, gap: 4 },
-  taglineEmoji: { fontSize: 24 },
+  taglineContainer: { alignItems: 'center', paddingVertical: 20, gap: 6 },
   tagline: {
     fontSize: 13,
     color: COLORS.textSecondary,

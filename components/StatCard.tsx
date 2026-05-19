@@ -1,18 +1,23 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants';
 
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
 interface Props {
-  label: string;
+  iconName: IconName;
   value: string;
-  emoji: string;
+  label: string;
   style?: ViewStyle;
 }
 
-export function StatCard({ label, value, emoji, style }: Props) {
+export function StatCard({ iconName, value, label, style }: Props) {
   return (
     <View style={[styles.card, style]}>
-      <Text style={styles.emoji}>{emoji}</Text>
+      <View style={styles.iconWrapper}>
+        <Ionicons name={iconName} size={18} color={COLORS.primary} />
+      </View>
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
     </View>
@@ -34,9 +39,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E8F4FB',
   },
-  emoji: {
-    fontSize: 24,
-    marginBottom: 6,
+  iconWrapper: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#EBF5FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   value: {
     fontSize: 20,

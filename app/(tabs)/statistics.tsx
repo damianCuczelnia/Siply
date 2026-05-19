@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 
 import { WaterChart } from '@/components/WaterChart';
@@ -11,7 +12,6 @@ import { useSettings } from '@/hooks/useSettings';
 import { COLORS } from '@/constants';
 import { getLast7DaysKeys, formatDisplayDate } from '@/utils/dateUtils';
 
-// Fade + slide-up animation wrapper for each card section
 function AnimatedSection({
   children,
   delay = 0,
@@ -24,12 +24,7 @@ function AnimatedSection({
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 450,
-        delay,
-        useNativeDriver: true,
-      }),
+      Animated.timing(opacity, { toValue: 1, duration: 450, delay, useNativeDriver: true }),
       Animated.spring(translateY, {
         toValue: 0,
         speed: 12,
@@ -51,11 +46,7 @@ export default function StatisticsScreen() {
   const { weekRecords, isLoading, refresh } = useWaterData();
   const { settings } = useSettings();
 
-  useFocusEffect(
-    useCallback(() => {
-      refresh();
-    }, [refresh])
-  );
+  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
 
   const last7Days = getLast7DaysKeys();
   const goalMl    = settings.dailyGoalMl;
@@ -81,7 +72,7 @@ export default function StatisticsScreen() {
   if (isLoading) {
     return (
       <LinearGradient colors={[COLORS.gradientStart, COLORS.gradientEnd]} style={styles.loading}>
-        <Text style={styles.loadingText}>📊</Text>
+        <Text style={styles.loadingText}>Ładowanie...</Text>
       </LinearGradient>
     );
   }
@@ -91,13 +82,11 @@ export default function StatisticsScreen() {
   return (
     <LinearGradient colors={[COLORS.gradientStart, COLORS.gradientEnd]} style={styles.gradient}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
           <AnimatedSection delay={0}>
             <View style={styles.header}>
-              <Text style={styles.title}>Statystyki 📊</Text>
+              <Text style={styles.title}>Statystyki</Text>
               <Text style={styles.subtitle}>Ostatnie 7 dni — jak ci idzie?</Text>
             </View>
           </AnimatedSection>
@@ -128,12 +117,12 @@ export default function StatisticsScreen() {
               <AnimatedSection delay={160}>
                 <View style={styles.statsGrid}>
                   <View style={styles.statsRow}>
-                    <StatCard emoji="📊" value={mlLabel(averageMl)}    label="Dzienna średnia" />
-                    <StatCard emoji="🏆" value={mlLabel(bestDayMl)}    label="Najlepszy dzień" />
+                    <StatCard iconName="stats-chart" value={mlLabel(averageMl)} label="Dzienna średnia" />
+                    <StatCard iconName="trophy"       value={mlLabel(bestDayMl)} label="Najlepszy dzień" />
                   </View>
                   <View style={styles.statsRow}>
-                    <StatCard emoji="✅" value={`${goalsMetCount} / 7`} label="Cel osiągnięty" />
-                    <StatCard emoji="💧" value={mlLabel(totalWeekMl)}  label="Razem w tygodniu" />
+                    <StatCard iconName="checkmark-circle" value={`${goalsMetCount} / 7`} label="Cel osiągnięty" />
+                    <StatCard iconName="water"             value={mlLabel(totalWeekMl)}    label="Razem w tygodniu" />
                   </View>
                 </View>
               </AnimatedSection>
@@ -141,23 +130,25 @@ export default function StatisticsScreen() {
               {bestDate && (
                 <AnimatedSection delay={240}>
                   <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Najlepsza forma 🏆</Text>
+                    <Text style={styles.cardTitle}>Najlepsza forma</Text>
                     <View style={styles.bestDayRow}>
-                      <Text style={styles.trophyEmoji}>🏆</Text>
+                      <View style={styles.trophyIcon}>
+                        <Ionicons name="trophy" size={24} color={COLORS.warning} />
+                      </View>
                       <View>
                         <Text style={styles.bestDayDate}>{formatDisplayDate(bestDate)}</Text>
                         <Text style={styles.bestDayAmount}>
                           {mlLabel(bestDayMl)}
                           {bestDayMl >= goalMl && (
-                            <Text style={styles.goalBadge}> · Cel ✓</Text>
+                            <Text style={styles.goalBadge}> · Cel</Text>
                           )}
                         </Text>
                         <Text style={styles.bestDayQuip}>
                           {bestDayMl >= 3000
-                            ? 'Jesteś wręcz akwarium 🐠'
+                            ? 'Jesteś wręcz akwarium'
                             : bestDayMl >= 2000
-                            ? 'Nawodnienie na medal! 🥇'
-                            : 'Dobry wynik, pracuj dalej 💪'}
+                            ? 'Nawodnienie na medal!'
+                            : 'Dobry wynik, pracuj dalej'}
                         </Text>
                       </View>
                     </View>
@@ -179,9 +170,9 @@ export default function StatisticsScreen() {
                     </View>
                     <Text style={styles.goalBarLabel}>
                       {goalsMetCount === 0
-                        ? 'Jeszcze żadnego celu... dasz radę! 💪'
+                        ? 'Jeszcze żadnego celu... dasz radę!'
                         : goalsMetCount === 7
-                        ? 'Perfekcja! Cały tydzień! 🎉'
+                        ? 'Perfekcja! Cały tydzień!'
                         : `${Math.round((goalsMetCount / 7) * 100)}% dni w normie`}
                     </Text>
                   </View>
@@ -191,11 +182,13 @@ export default function StatisticsScreen() {
           ) : (
             <AnimatedSection delay={80}>
               <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>📊</Text>
+                <View style={styles.emptyIconWrapper}>
+                  <Ionicons name="bar-chart-outline" size={52} color={COLORS.primaryLight} />
+                </View>
                 <Text style={styles.emptyTitle}>Brak danych</Text>
                 <Text style={styles.emptySubtitle}>
                   Zacznij śledzić wodę na zakładce Dziś, a tu pojawią się wykresy i statystyki.{'\n'}
-                  Twoje nerki liczą na ciebie 🫘
+                  Twoje nerki liczą na ciebie.
                 </Text>
               </View>
             </AnimatedSection>
@@ -212,7 +205,7 @@ const styles = StyleSheet.create({
   gradient:    { flex: 1 },
   safeArea:    { flex: 1 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loadingText: { fontSize: 48 },
+  loadingText: { fontSize: 18, color: COLORS.textSecondary, fontWeight: '600' },
 
   scroll: { paddingHorizontal: 20, paddingTop: 8 },
 
@@ -239,12 +232,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
 
-  legendRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginTop: 12,
-    justifyContent: 'center',
-  },
+  legendRow: { flexDirection: 'row', gap: 16, marginTop: 12, justifyContent: 'center' },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendDot:  { width: 8, height: 8, borderRadius: 4 },
   legendText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
@@ -252,8 +240,15 @@ const styles = StyleSheet.create({
   statsGrid: { gap: 12, marginBottom: 16 },
   statsRow:  { flexDirection: 'row', gap: 12 },
 
-  bestDayRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  trophyEmoji:   { fontSize: 36 },
+  bestDayRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  trophyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FFF8E8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   bestDayDate:   { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
   bestDayAmount: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '500', marginTop: 2 },
   bestDayQuip:   { fontSize: 12, color: COLORS.primary, fontWeight: '600', marginTop: 4 },
@@ -272,16 +267,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     minWidth: 8,
   },
-  goalBarLabel: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-    textAlign: 'right',
-  },
+  goalBarLabel: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '600', textAlign: 'right' },
 
   emptyState: { alignItems: 'center', paddingVertical: 60 },
-  emptyEmoji: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
+  emptyIconWrapper: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#E8F4FD',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle:    { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
   emptySubtitle: {
     fontSize: 14,
     color: COLORS.textSecondary,
