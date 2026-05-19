@@ -13,14 +13,14 @@ import {
 import { getLast7DaysKeys } from '@/utils/dateUtils';
 
 interface WaterDataState {
-  todayRecord:      DayRecord | null;
-  weekRecords:      Record<string, DayRecord>;
-  isLoading:        boolean;
-  bottleReturns:    BottleReturn[];
-  pendingBottles:   number;
-  pendingZl:        number;
-  totalEarnedZl:    number;
-  totalReturnedCount: number;
+  todayRecord:        DayRecord | null;
+  weekRecords:        Record<string, DayRecord>;
+  isLoading:          boolean;
+  bottleReturns:      BottleReturn[];
+  pendingBottles:     number;   // butelki czekające na zwrot
+  pendingZl:          number;   // kaucja do odzyskania
+  totalEarnedZl:      number;   // łączne zarobki z kaucji
+  totalReturnedCount: number;   // łączna liczba oddanych butelek
 }
 
 export function useWaterData() {

@@ -3,7 +3,7 @@ import { DayRecord, AppSettings, WaterEntry, BottleEntry, BottleReturn, BottleKi
 import { STORAGE_KEYS, DEFAULT_DAILY_GOAL_ML } from '@/constants';
 import { getTodayKey, generateEntryId } from '@/utils/dateUtils';
 
-// AUTO-SEEDED FOR DEMO
+// Wypełnienie danymi demo przy pierwszym uruchomieniu
 async function seedDemoDataIfEmpty(): Promise<void> {
   try {
     const existing = await AsyncStorage.getItem(STORAGE_KEYS.WATER_RECORDS);
@@ -19,7 +19,7 @@ async function seedDemoDataIfEmpty(): Promise<void> {
 // Call once on module load
 seedDemoDataIfEmpty();
 
-// ─── Records ──────────────────────────────────────────────────────────────────
+// ─── Rekordy ──────────────────────────────────────────────────────────────────
 
 async function getAllRecords(): Promise<Record<string, DayRecord>> {
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.WATER_RECORDS);
@@ -115,7 +115,7 @@ export async function resetAllData(): Promise<void> {
   await AsyncStorage.multiRemove([STORAGE_KEYS.WATER_RECORDS, STORAGE_KEYS.BOTTLE_RETURNS]);
 }
 
-// ─── Bottles ──────────────────────────────────────────────────────────────────
+// ─── Butelki ──────────────────────────────────────────────────────────────────
 
 export async function addBottleEntry(
   kind: BottleKind,
@@ -158,7 +158,7 @@ export async function getAllBottlesUsed(): Promise<BottleEntry[]> {
   return Object.values(records).flatMap(r => r.bottles ?? []);
 }
 
-// ─── Settings ─────────────────────────────────────────────────────────────────
+// ─── Ustawienia ───────────────────────────────────────────────────────────────
 
 export async function getSettings(): Promise<AppSettings> {
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
