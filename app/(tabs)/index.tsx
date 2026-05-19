@@ -268,53 +268,58 @@ export default function TodayScreen() {
         animationType="slide"
         onRequestClose={() => setCustomAmountVisible(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setCustomAmountVisible(false)}
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          {/* stopPropagation so tap inside the card doesn't close modal */}
-          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Ile wypiłeś?</Text>
-            <Text style={styles.modalSubtitle}>Wpisz ilość w mililitrach</Text>
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setCustomAmountVisible(false)}
+          >
+            <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Ile wypiłeś?</Text>
+              <Text style={styles.modalSubtitle}>Wpisz ilość w mililitrach</Text>
 
-            {/* Visible input field */}
-            <Text style={styles.inputLabel}>Ilość (ml)</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.input}
-                value={customInput}
-                onChangeText={setCustomInput}
-                placeholder="np. 400"
-                placeholderTextColor={COLORS.textLight}
-                keyboardType="number-pad"
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={handleCustomAdd}
-                maxLength={4}
-              />
-              <View style={styles.inputUnitBox}>
-                <Text style={styles.inputUnit}>ml</Text>
+              <Text style={styles.inputLabel}>Ilość (ml)</Text>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.input}
+                  value={customInput}
+                  onChangeText={setCustomInput}
+                  placeholder="np. 400"
+                  placeholderTextColor={COLORS.textLight}
+                  keyboardType="number-pad"
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={handleCustomAdd}
+                  maxLength={4}
+                  selectionColor={COLORS.primary}
+                  underlineColorAndroid="transparent"
+                />
+                <View style={styles.inputUnitBox}>
+                  <Text style={styles.inputUnit}>ml</Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.modalCancel}
-                onPress={() => {
-                  setCustomInput('');
-                  setCustomAmountVisible(false);
-                }}
-              >
-                <Text style={styles.modalCancelText}>Anuluj</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalConfirm} onPress={handleCustomAdd}>
-                <Ionicons name="add" size={18} color="#fff" />
-                <Text style={styles.modalConfirmText}>Dodaj</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.modalCancel}
+                  onPress={() => {
+                    setCustomInput('');
+                    setCustomAmountVisible(false);
+                  }}
+                >
+                  <Text style={styles.modalCancelText}>Anuluj</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalConfirm} onPress={handleCustomAdd}>
+                  <Ionicons name="add" size={18} color="#fff" />
+                  <Text style={styles.modalConfirmText}>Dodaj</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     </LinearGradient>
   );
@@ -467,7 +472,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30,60,90,0.35)',
     justifyContent: 'flex-end',
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+    paddingBottom: 16,
   },
   modalCard: {
     backgroundColor: COLORS.backgroundCard,
@@ -502,28 +507,29 @@ const styles = StyleSheet.create({
   },
   inputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     backgroundColor: '#F4F9FE',
     borderRadius: 16,
     borderWidth: 2,
     borderColor: COLORS.primaryLight,
-    paddingLeft: 16,
     marginBottom: 20,
-    overflow: 'hidden',
+    height: 68,
   },
   input: {
     flex: 1,
     fontSize: 32,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: 'transparent',
   },
   inputUnitBox: {
     backgroundColor: '#E0F0FB',
     paddingHorizontal: 16,
-    paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    borderTopRightRadius: 14,
+    borderBottomRightRadius: 14,
   },
   inputUnit: { fontSize: 16, color: COLORS.primary, fontWeight: '700' },
   modalButtons: { flexDirection: 'row', gap: 12 },
