@@ -38,6 +38,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Dziś',
+          tabBarLabel: 'Dziś',
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'water' : 'water-outline'} focused={focused} />
           ),
