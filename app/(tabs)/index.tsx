@@ -23,7 +23,7 @@ import { QuickAddButton } from '@/components/QuickAddButton';
 import { FlyingDrop } from '@/components/FlyingDrop';
 import { useWaterData } from '@/hooks/useWaterData';
 import { useSettings } from '@/hooks/useSettings';
-import { COLORS, QUICK_ADD_OPTIONS, BOTTLE_OPTIONS } from '@/constants';
+import { COLORS, QUICK_ADD_OPTIONS } from '@/constants';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import {
   getGreeting,
@@ -53,6 +53,10 @@ export default function TodayScreen() {
   const [flyingDrops, setFlyingDrops]                 = useState<FlyingDropEntry[]>([]);
   const dropIdRef = useRef(0);
 
+  const toastAnim     = useRef(new Animated.Value(0)).current;
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+
   // Slide-in on mount
   const slideY  = useRef(new Animated.Value(30)).current;
   const fadeIn  = useRef(new Animated.Value(0)).current;
@@ -63,6 +67,7 @@ export default function TodayScreen() {
       Animated.timing(fadeIn, { toValue: 1, duration: 500, useNativeDriver: true }),
       Animated.spring(slideY, { toValue: 0, speed: 12, bounciness: 6, useNativeDriver: true }),
     ]).start();
+    return () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); };
   }, []);
 
   useFocusEffect(
@@ -121,13 +126,27 @@ export default function TodayScreen() {
     closeModal();
   }, [customInput, handleAddWater, closeModal]);
 
-  const handleAddBottle = useCallback(async (
-    kind: import('@/types').BottleKind,
-    sizeL: number,
-    depositZl: number,
-  ) => {
-    await addBottle(kind, sizeL, depositZl);
-  }, [addBottle]);
+  const showBottleToast = useCallback(() => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastVisible(true);
+    toastAnim.setValue(0);
+    Animated.spring(toastAnim, { toValue: 1, speed: 20, bounciness: 8, useNativeDriver: true }).start();
+    toastTimerRef.current = setTimeout(() => {
+      Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+        setToastVisible(false);
+      });
+    }, 2500);
+  }, [toastAnim]);
+
+  const handleAddStandardBottle = useCallback(async () => {
+    await addBottle('PET', 0.5, 0.5);
+    showBottleToast();
+  }, [addBottle, showBottleToast]);
+
+  const handleAddGlassBottle = useCallback(async () => {
+    await addBottle('GLASS', 0.5, 1.0);
+    showBottleToast();
+  }, [addBottle, showBottleToast]);
 
   const handleReturnBottles = useCallback(() => {
     if (pendingBottles === 0) return;
@@ -250,29 +269,41 @@ export default function TodayScreen() {
 
               {/* Bottle deposit section */}
               <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Butelki kaucjonowane</Text>
-                  <Text style={styles.sectionHint}>zaznacz co masz do oddania</Text>
+                <Text style={styles.sectionTitle}>Butelki kaucjonowane</Text>
+                <View style={styles.bottleRow}>
+                  <TouchableOpacity
+                    style={styles.bottleMainBtn}
+                    activeOpacity={0.75}
+                    onPress={handleAddStandardBottle}
+                  >
+                    <Ionicons name="water-outline" size={20} color={COLORS.primary} />
+                    <Text style={styles.bottleMainBtnText}>Skończyłem butelkę</Text>
+                    <Text style={styles.bottleMainBtnSub}>+ 0.50 zł kaucji</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.bottleGlassBtn}
+                    activeOpacity={0.75}
+                    onPress={handleAddGlassBottle}
+                  >
+                    <Ionicons name="wine-outline" size={18} color={COLORS.success} />
+                    <Text style={styles.bottleGlassBtnText}>Szklana</Text>
+                    <Text style={styles.bottleGlassBtnSub}>+ 1.00 zł</Text>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.bottleGrid}>
-                  {BOTTLE_OPTIONS.map((opt, i) => (
-                    <TouchableOpacity
-                      key={i}
-                      style={[styles.bottleBtn, { borderColor: opt.color + '40' }]}
-                      activeOpacity={0.75}
-                      onPress={() => handleAddBottle(opt.kind, opt.sizeL, opt.depositZl)}
-                    >
-                      <Ionicons name={opt.icon as any} size={18} color={opt.color} />
-                      <Text style={[styles.bottleBtnLabel, { color: opt.color }]}>{opt.label}</Text>
-                      <Text style={styles.bottleBtnSub}>{opt.sublabel}</Text>
-                      <View style={[styles.depositBadge, { backgroundColor: opt.color + '20' }]}>
-                        <Text style={[styles.depositBadgeText, { color: opt.color }]}>
-                          {opt.depositZl.toFixed(2)} zł
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+
+                {toastVisible && (
+                  <Animated.View style={[styles.bottleToast, {
+                    opacity: toastAnim,
+                    transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
+                  }]}>
+                    <Ionicons name="bag-handle-outline" size={14} color={COLORS.warning} />
+                    <Text style={styles.bottleToastText}>
+                      Masz potencjalnie {pendingBottles}{' '}
+                      {pendingBottles === 1 ? 'butelkę' : pendingBottles < 5 ? 'butelki' : 'butelek'}{' '}
+                      do oddania ({pendingZl.toFixed(2)} zł)
+                    </Text>
+                  </Animated.View>
+                )}
 
                 {pendingBottles > 0 && (
                   <View style={styles.pendingCard}>
@@ -679,30 +710,56 @@ const styles = StyleSheet.create({
   },
   modalConfirmText: { fontSize: 15, color: COLORS.textWhite, fontWeight: '700' },
 
-  sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
-  sectionHint:   { fontSize: 11, color: COLORS.textLight, fontWeight: '500' },
-
-  bottleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-  bottleBtn: {
-    width: '30%',
-    flexGrow: 1,
+  bottleRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  bottleMainBtn: {
+    flex: 2,
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     backgroundColor: COLORS.backgroundCard,
     borderWidth: 1.5,
-    gap: 3,
+    borderColor: COLORS.primaryLight,
+    gap: 4,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 2,
   },
-  bottleBtnLabel: { fontSize: 15, fontWeight: '800', letterSpacing: -0.3 },
-  bottleBtnSub:   { fontSize: 10, color: COLORS.textLight, fontWeight: '600' },
-  depositBadge:   { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, marginTop: 2 },
-  depositBadgeText: { fontSize: 11, fontWeight: '700' },
+  bottleMainBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.primary },
+  bottleMainBtnSub:  { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
+  bottleGlassBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+    backgroundColor: COLORS.backgroundCard,
+    borderWidth: 1.5,
+    borderColor: '#C8F0DA',
+    gap: 4,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  bottleGlassBtnText: { fontSize: 13, fontWeight: '700', color: COLORS.success },
+  bottleGlassBtnSub:  { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
+  bottleToast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FFF8EE',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#FFE0A0',
+  },
+  bottleToastText: { flex: 1, fontSize: 13, color: COLORS.textPrimary, fontWeight: '600' },
 
   pendingCard: {
     flexDirection: 'row',
