@@ -22,3 +22,8 @@ ios/
 
 expo-env.d.ts
 # @end expo-cli
+
+# Presentation & build artifacts
+Siply_Presentation.pptx
+dist-web/
+assets/screenshots/
